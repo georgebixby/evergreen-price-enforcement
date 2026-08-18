@@ -24,6 +24,7 @@
       --success: #2e7d32;
       --success-bg: #e8f5e9;
       --detected-bg: #f3faf4;
+      --detected-bg-blue: #e8f0fe;
       --detected-mismatch-bg: #fdf3f3;
       --warn-corner: #c62828;
       --success-corner: #2e7d32;
@@ -849,6 +850,11 @@
 
     body.detected-variant-green .grid td.col-detected--mismatch { background: var(--detected-bg); }
     body.detected-variant-green .grid td.col-detected--resolved { background: #fff; }
+
+    body.detected-variant-blue .grid td.col-detected--mismatch { background: var(--detected-bg-blue); }
+    body.detected-variant-blue .grid td.col-detected--resolved { background: #fff; }
+    body.detected-variant-blue .grid tbody tr.row-selected td.col-detected--mismatch { background: #d4e3fc; }
+    body.detected-variant-blue .grid tbody tr.row-selected td.col-detected--resolved { background: var(--detected-bg-blue); }
 
     /* layout-3 / layout-7: detected retail — white field with green corner marker */
     body.layout-3 .grid td.col-detected--mismatch,
@@ -2029,18 +2035,7 @@
     <summary>Prototype controls</summary>
     <div class="proto-panel__body">
       <label class="proto-label" for="proto-layout-variant">Layout variant</label>
-      <select class="proto-select" id="proto-layout-variant" aria-label="Layout variant">
-        <option value="layout-1">1 — Separate, red/green backgrounds, check on detected</option>
-        <option value="layout-1-1">1.1 — Separate, verified badge on MSRP after accept</option>
-        <option value="layout-2">2 — Separate, green → white backgrounds, check on detected</option>
-        <option value="layout-3">3 — Separate, green corner, check on detected</option>
-        <option value="layout-4">4 — Separate, green corner, arrow between columns</option>
-        <option value="layout-5">5 — Combined MSRP → detected column</option>
-        <option value="layout-5-1">5.1 — Combined, verified badge on accept</option>
-        <option value="layout-8">8 — Combined, strikethrough old MSRP + updated value</option>
-        <option value="layout-6">6 — Separate, green corner, check on current MSRP</option>
-        <option value="layout-7">7 — Separate, green corner, apply in actions column</option>
-      </select>
+      <select class="proto-select" id="proto-layout-variant" aria-label="Layout variant"></select>
       <p class="proto-note">Required and At risk are separate filters. Declining at-risk rows moves them to Resolved.</p>
       <div class="proto-switch-row">
         <span>Arrow icon tour on load</span>
@@ -2082,18 +2077,38 @@
     const THUMB_COLORS = ["#e8d5c4", "#d4e8d4", "#d4d8e8", "#e8d4d4", "#e8e4d4", "#d4e8e8"];
     const LAYOUT_VARIANT_KEY = "evergreen-price-enforcement-layout-variant";
     const ARROW_TOUR_KEY = "evergreen-price-enforcement-arrow-tour";
-    const LAYOUT_VARIANTS = [
-      "layout-1",
-      "layout-1-1",
-      "layout-2",
-      "layout-3",
-      "layout-4",
-      "layout-5",
-      "layout-5-1",
-      "layout-8",
-      "layout-6",
-      "layout-7",
+    const LAYOUT_VARIANT_OPTIONS = [
+      { value: "layout-1", label: "1 — Separate, red/green backgrounds, check on detected" },
+      { value: "layout-1-1", label: "1.1 — Separate, verified badge on MSRP after accept" },
+      { value: "layout-2", label: "2 — Separate, green → white backgrounds, check on detected" },
+      { value: "layout-2-1", label: "2.1 — Separate, light blue → white backgrounds, check on detected" },
+      { value: "layout-3", label: "3 — Separate, green corner, check on detected" },
+      { value: "layout-4", label: "4 — Separate, green corner, arrow between columns" },
+      { value: "layout-5", label: "5 — Combined MSRP → detected column" },
+      { value: "layout-5-1", label: "5.1 — Combined, verified badge on accept" },
+      { value: "layout-6", label: "6 — Separate, green corner, check on current MSRP" },
+      { value: "layout-7", label: "7 — Separate, green corner, apply in actions column" },
+      { value: "layout-8", label: "8 — Combined, strikethrough old MSRP + updated value" },
     ];
+
+    const LAYOUT_VARIANTS = LAYOUT_VARIANT_OPTIONS.map((o) => o.value);
+
+    function layoutVariantSortOrder(id) {
+      const match = id.match(/^layout-(\d+)(?:-(\d+))?$/);
+      if (!match) return 999;
+      return Number(match[1]) + (match[2] ? Number(match[2]) / 10 : 0);
+    }
+
+    function populateLayoutVariantSelect() {
+      const select = document.getElementById("proto-layout-variant");
+      if (!select) return;
+      const sorted = [...LAYOUT_VARIANT_OPTIONS].sort(
+        (a, b) => layoutVariantSortOrder(a.value) - layoutVariantSortOrder(b.value)
+      );
+      select.innerHTML = sorted
+        .map((o) => `<option value="${o.value}">${o.label}</option>`)
+        .join("");
+    }
 
     function checkIconSvg() {
       return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -2163,6 +2178,7 @@
         "layout-1",
         "layout-1-1",
         "layout-2",
+        "layout-2-1",
         "layout-3",
         "layout-4",
         "layout-5",
@@ -2171,7 +2187,8 @@
         "layout-6",
         "layout-7",
         "detected-variant-red",
-        "detected-variant-green"
+        "detected-variant-green",
+        "detected-variant-blue"
       );
       if (variant === "layout-1") {
         document.body.classList.add("layout-1", "detected-variant-red");
@@ -2179,6 +2196,8 @@
         document.body.classList.add("layout-1-1", "detected-variant-red");
       } else if (variant === "layout-2") {
         document.body.classList.add("layout-2", "detected-variant-green");
+      } else if (variant === "layout-2-1") {
+        document.body.classList.add("layout-2-1", "detected-variant-blue");
       } else if (variant === "layout-3") {
         document.body.classList.add("layout-3");
       } else if (variant === "layout-4") {
@@ -3292,6 +3311,7 @@
     });
 
     syncArrowTourToggle();
+    populateLayoutVariantSelect();
     applyLayoutVariant(initialLayoutVariant());
     savedSnapshot = snapshot();
     updateSaveState();
