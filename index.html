@@ -1,0 +1,3033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resolve pricing issues — Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --text: #333;
+      --subdued: #757575;
+      --border: #dfe0e1;
+      --surface-tile: #fbfbfb;
+      --radius: 4px;
+      --nav-width: 256px;
+      --content-inset: 56px;
+      --main-pad-right: 40px;
+      --font: "Graphik", "DM Sans", system-ui, -apple-system, sans-serif;
+      --error: #c62828;
+      --error-bg: #fdecea;
+      --error-dark: #c62828;
+      --success: #2e7d32;
+      --success-bg: #e8f5e9;
+      --detected-bg: #f3faf4;
+      --detected-mismatch-bg: #fdf3f3;
+      --warn-corner: #c62828;
+      --success-corner: #2e7d32;
+      --at-risk: #c45c00;
+      --grid-line: #e8e8e8;
+      --grid-header-text: #8a8a8a;
+      --grid-row-height: 32px;
+      --cell-focus-blue: #0b7cda;
+      --freeze-check: 32px;
+      --freeze-status: 32px;
+      --freeze-product: 248px;
+      --freeze-edge: calc(var(--freeze-check) + var(--freeze-status) + var(--freeze-product));
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.15px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    input[type="number"] { -moz-appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: min(1920px, 100%);
+      margin: 0 auto;
+      display: flex;
+      min-height: 100vh;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    /* ---- nav (from Nudges prototype) ---- */
+    .nav {
+      width: var(--nav-width);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 104px;
+      padding: 32px 24px;
+    }
+
+    .logo {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+    }
+
+    .nav-tools { display: flex; gap: 8px; }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 999px;
+      background: var(--surface-tile);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .icon-btn--notify::after {
+      content: "";
+      position: absolute;
+      top: 8px;
+      right: 9px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e02424;
+      border: 1.5px solid var(--surface-tile);
+    }
+
+    .icon-btn { position: relative; }
+
+    .nav-links { flex: 1; padding-top: 6px; }
+
+    .nav-row {
+      min-height: 36px;
+      padding: 6px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #595959;
+      cursor: default;
+    }
+
+    .nav-row--active { background: #f7f7f7; color: #2b2b2b; }
+
+    .nav-child {
+      min-height: 36px;
+      padding: 6px 24px 6px 40px;
+      font-size: 14px;
+      color: #595959;
+      cursor: default;
+    }
+
+    .nav-child--active {
+      background: #f7f7f7;
+      color: #2b2b2b;
+      font-weight: 500;
+    }
+
+    .badge {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      background: #333;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      padding: 0 5px;
+    }
+
+    .nav-footer { border-top: 1px solid var(--border); padding: 14px 0; }
+
+  .nav-section-label {
+      padding: 12px 24px 4px 40px;
+      font-size: 12px;
+      color: var(--subdued);
+    }
+
+    /* ---- main ---- */
+    .main {
+      flex: 1;
+      min-width: 0;
+      border-left: 1px solid var(--border);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-head {
+      padding: 20px var(--main-pad-right) 16px var(--content-inset);
+    }
+
+    .back-link {
+      border: none;
+      background: none;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0;
+      margin: 0 0 6px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 38px;
+      font-weight: 600;
+    }
+
+    .page-desc {
+      margin: 8px 0 0;
+      max-width: 720px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .page-desc strong { font-weight: 600; }
+
+    .page-desc__link {
+      border: none;
+      background: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+
+    .head-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+
+    .text-link {
+      border: none;
+      background: none;
+      padding: 0;
+      font: inherit;
+      font-size: 14px;
+      color: var(--text);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+
+    .text-link:disabled {
+      color: #b0b0b0;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      border: none;
+      border-radius: var(--radius);
+      background: #333;
+      color: #fff;
+      height: 40px;
+      padding: 0 20px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover { background: #1a1a1a; }
+
+    .btn-primary:disabled {
+      background: #d4d4d4;
+      color: #fff;
+      cursor: not-allowed;
+    }
+
+    .btn-primary--sm {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary--sm svg {
+      flex-shrink: 0;
+    }
+
+    /* ---- toolbar ---- */
+    .toolbar-slot {
+      padding: 0 var(--main-pad-right) 12px var(--content-inset);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 0;
+      flex-wrap: wrap;
+    }
+
+    .toolbar[hidden] {
+      display: none !important;
+    }
+
+    .toolbar--selection {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      background: #f7f7f7;
+      color: var(--text);
+      box-sizing: border-box;
+      gap: 24px;
+    }
+
+    .toolbar--default {
+      padding: 0;
+      background: transparent;
+    }
+
+    .toolbar-selection-main {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      min-width: 0;
+    }
+
+    .toolbar-selection-meta {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .toolbar-selection-apply-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .toolbar-selection-clear,
+    .toolbar-selection-decline {
+      border: none;
+      background: none;
+      padding: 0;
+      font: inherit;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.15px;
+      color: var(--text);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+
+    .toolbar-selection-clear:hover,
+    .toolbar-selection-decline:hover {
+      color: #1a1a1a;
+    }
+
+    .toolbar-selection-decline[hidden] {
+      display: none !important;
+    }
+
+    .toolbar-selection-count {
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 400;
+      letter-spacing: 0.15px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .toolbar-selection-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-apply-selected {
+      border: 1px solid #dadada;
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      height: 32px;
+      padding: 0 12px;
+      font: inherit;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 400;
+      letter-spacing: 0.15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .btn-apply-selected:hover {
+      background: #f7f7f7;
+      border-color: #bdbdbd;
+    }
+
+    .btn-apply-selected:disabled {
+      background: #f7f7f7;
+      color: #b0b0b0;
+      border-color: #e6e6e3;
+      cursor: not-allowed;
+    }
+
+    .toolbar-icon-btn--surface {
+      width: 40px;
+      height: 40px;
+      border: 1px solid transparent;
+      background: #f7f7f7;
+    }
+
+    .toolbar-icon-btn--surface:not(:disabled) {
+      background: #fff;
+      border-color: #dadada;
+    }
+
+    .toolbar-icon-btn--surface:not(:disabled):hover {
+      background: #f7f7f7;
+      border-color: #bdbdbd;
+    }
+
+    .toolbar-icon-btn--surface:disabled {
+      background: #f7f7f7;
+      border: none;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left .filter-pills {
+      border-left: 1px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .btn-apply-all {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      height: 36px;
+      padding: 0 16px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-apply-all:hover { border-color: #999; }
+    .btn-apply-all:disabled {
+      color: #b0b0b0;
+      background: #f4f4f2;
+      border-color: #e6e6e3;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      border: 1px solid #d9d9d4;
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+      line-height: 16px;
+      height: 28px;
+      padding: 0 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-secondary svg {
+      flex-shrink: 0;
+    }
+
+    .btn-secondary:hover { background: #f7f7f7; border-color: #bdbdbd; }
+
+    .btn-secondary:disabled {
+      color: #b0b0b0;
+      background: #f4f4f2;
+      border-color: #e6e6e3;
+      cursor: not-allowed;
+    }
+
+    .filter-pills { display: flex; gap: 4px; }
+
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      height: 32px;
+      padding: 0 14px;
+      font: inherit;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill:hover { border-color: #999; }
+
+    .pill--active {
+      background: #f7f7f7;
+      border-color: #333;
+      font-weight: 500;
+    }
+
+    .pill-count {
+      font-size: 12px;
+      color: var(--subdued);
+    }
+
+    .pill--active .pill-count { color: var(--text); }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .toolbar-icon-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .toolbar-icon-btn[data-tooltip] {
+      position: relative;
+    }
+
+    .toolbar-icon-btn[data-tooltip]::before,
+    .toolbar-icon-btn[data-tooltip]::after {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      z-index: 20;
+    }
+
+    .toolbar-icon-btn[data-tooltip]::before {
+      content: attr(data-tooltip);
+      bottom: calc(100% + 7px);
+      padding: 6px 10px;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      white-space: nowrap;
+      border-radius: var(--radius);
+    }
+
+    .toolbar-icon-btn[data-tooltip]::after {
+      content: "";
+      bottom: calc(100% + 3px);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #333;
+    }
+
+    .toolbar-icon-btn[data-tooltip]:not(:disabled):hover::before,
+    .toolbar-icon-btn[data-tooltip]:not(:disabled):hover::after,
+    .toolbar-icon-btn[data-tooltip]:not(:disabled):focus-visible::before,
+    .toolbar-icon-btn[data-tooltip]:not(:disabled):focus-visible::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .toolbar-icon-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .toolbar-icon-btn--surface:disabled {
+      opacity: 1;
+    }
+
+    /* ---- spreadsheet ---- */
+    .grid-wrap {
+      flex: 1;
+      overflow: auto;
+      padding: 0 var(--main-pad-right) 24px var(--content-inset);
+      background: #fff;
+    }
+
+    .grid {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      table-layout: fixed;
+      background: #fff;
+    }
+
+    .grid thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #fff;
+      border-top: 1px solid var(--grid-line);
+      border-bottom: 1px solid var(--grid-line);
+      border-right: 1px solid var(--grid-line);
+      padding: 0 8px;
+      height: 28px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 28px;
+      color: var(--text);
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .grid thead th.col-freeze {
+      z-index: 4;
+      background: #fff;
+    }
+
+    .grid thead th.col-freeze-3 {
+      z-index: 5;
+      box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.12);
+    }
+
+    .grid thead th.col-check {
+      width: var(--freeze-check);
+      min-width: var(--freeze-check);
+      max-width: var(--freeze-check);
+      text-align: center;
+      padding: 0;
+    }
+
+    .grid thead th.col-status {
+      width: var(--freeze-status);
+      min-width: var(--freeze-status);
+      max-width: var(--freeze-status);
+      text-align: center;
+      padding: 0;
+    }
+
+    .grid thead th.col-product {
+      width: var(--freeze-product);
+      min-width: var(--freeze-product);
+      max-width: var(--freeze-product);
+    }
+
+    .grid thead th.col-variants { width: 56px; min-width: 56px; }
+    .grid thead th.col-price { width: 128px; min-width: 128px; }
+    .grid thead th.col-price-bridge { width: 32px; min-width: 32px; }
+    .grid thead th.col-margin { width: 108px; min-width: 108px; }
+    .grid thead th.col-actions { width: 148px; min-width: 148px; }
+
+  .grid tbody tr { background: #fff; }
+
+    .grid tbody tr.row-group,
+    .grid tbody tr.row-variant { background: #fff; }
+
+    .grid td {
+      padding: 0;
+      vertical-align: middle;
+      height: var(--grid-row-height);
+      min-height: var(--grid-row-height);
+      border-bottom: 1px solid var(--grid-line);
+      border-right: 1px solid var(--grid-line);
+      background: #fff;
+      position: relative;
+    }
+
+    .grid td.col-freeze {
+      position: sticky;
+      z-index: 1;
+      background: #fff;
+    }
+
+    .grid td.col-freeze-1 { left: 0; }
+    .grid td.col-freeze-2 { left: var(--freeze-check); }
+    .grid td.col-freeze-3 {
+      left: calc(var(--freeze-check) + var(--freeze-status));
+      box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    .grid tbody tr.row-selected td { background-color: #e8f0fe; }
+    .grid tbody tr.row-selected:hover td { background-color: #e3ecfa; }
+    .grid tbody tr.row-selected td.col-freeze { background-color: #e8f0fe; }
+    .grid tbody tr.row-selected:hover td.col-freeze { background-color: #e3ecfa; }
+
+    .grid td.col-check {
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .grid td.col-status { text-align: center; }
+
+    .grid td.col-product {
+      padding: 0 8px;
+      overflow: hidden;
+    }
+
+    .grid td.col-variants {
+      padding: 0 8px;
+      font-size: 12px;
+      color: var(--subdued);
+      text-align: center;
+    }
+
+    .grid td.col-margin,
+    .grid td.col-actions {
+      padding: 0;
+    }
+
+    .grid td.col-detected--mismatch { background: var(--detected-mismatch-bg); }
+    .grid td.col-detected--resolved { background: var(--detected-bg); }
+
+    .grid tbody tr.row-selected td.col-detected--mismatch { background: #f5e4e4; }
+    .grid tbody tr.row-selected td.col-detected--resolved { background: #e5f3e6; }
+
+    body.detected-variant-green .grid td.col-detected--mismatch { background: var(--detected-bg); }
+    body.detected-variant-green .grid td.col-detected--resolved { background: #fff; }
+
+    /* layout-3 / layout-7: detected retail — white field with green corner marker */
+    body.layout-3 .grid td.col-detected--mismatch,
+    body.layout-3 .grid td.col-detected--resolved,
+    body.layout-4 .grid td.col-detected--mismatch,
+    body.layout-4 .grid td.col-detected--resolved,
+    body.layout-6 .grid td.col-detected--mismatch,
+    body.layout-6 .grid td.col-detected--resolved,
+    body.layout-7 .grid td.col-detected--mismatch,
+    body.layout-7 .grid td.col-detected--resolved {
+      background: #fff;
+    }
+
+    .detected-cell-inner--green-corner {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      position: relative;
+      overflow: visible;
+    }
+
+    .detected-cell-inner--green-corner::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 7px 7px 0;
+      border-color: transparent var(--success-corner) transparent transparent;
+      pointer-events: none;
+    }
+
+    .detected-cell-inner--resolved.detected-cell-inner--green-corner {
+      border-color: transparent;
+    }
+
+    .product-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      height: var(--grid-row-height);
+    }
+
+    .product-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 2px;
+      border: 1px solid var(--grid-line);
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #f0f0f0;
+    }
+
+    .product-name {
+      font-size: 12px;
+      line-height: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .product-name--variant {
+      color: var(--subdued);
+      padding-left: 32px;
+    }
+
+    .group-toggle {
+      border: none;
+      background: none;
+      padding: 0;
+      margin-right: 2px;
+      cursor: pointer;
+      color: var(--subdued);
+      display: inline-flex;
+      vertical-align: middle;
+    }
+
+    .group-toggle svg { transition: transform 0.15s; }
+    .group-toggle.collapsed svg { transform: rotate(-90deg); }
+
+  /* status icons */
+    .status-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .status-icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .status-icon--error {
+      color: var(--error-dark);
+    }
+
+    .status-icon--at-risk {
+      color: var(--at-risk);
+    }
+
+    .status-icon--success {
+      color: var(--success);
+    }
+
+    /* price cells — spreadsheet cell editors */
+    .price-cell {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+    }
+
+    .price-field {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      height: 100%;
+      min-height: var(--grid-row-height);
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      overflow: visible;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .price-field:focus-within {
+      outline: 2px solid var(--cell-focus-blue);
+      outline-offset: -2px;
+      background: #fff;
+      z-index: 2;
+      box-shadow: none;
+    }
+
+    .price-field:focus-within::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 5px;
+      height: 5px;
+      background: var(--cell-focus-blue);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .price-field--mismatch::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 7px 7px 0;
+      border-color: transparent var(--warn-corner) transparent transparent;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .price-field:focus-within.price-field--mismatch::before {
+      top: 2px;
+      right: 2px;
+    }
+
+    .price-field--resolved::before { display: none; }
+
+    .price-field .cur {
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--text);
+      padding: 0 0 0 10px;
+      flex-shrink: 0;
+    }
+
+    .price-field input {
+      border: none;
+      outline: none;
+      font: inherit;
+      font-size: 12px;
+      line-height: 16px;
+      width: 100%;
+      min-width: 0;
+      flex: 1;
+      padding: 0 10px 0 4px;
+      background: transparent;
+      text-align: right;
+      color: var(--text);
+    }
+
+    .price-field--readonly {
+      background: #f4f4f2;
+    }
+
+    .price-field--readonly input,
+    .price-field input:disabled {
+      color: var(--subdued);
+      cursor: not-allowed;
+    }
+
+    .margin-field {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      min-height: var(--grid-row-height);
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 0 4px 0 8px;
+      gap: 2px;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .margin-field:focus-within {
+      outline: 2px solid var(--cell-focus-blue);
+      outline-offset: -2px;
+      background: #fff;
+      z-index: 2;
+    }
+
+    .margin-field:focus-within::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 5px;
+      height: 5px;
+      background: var(--cell-focus-blue);
+      pointer-events: none;
+    }
+
+    .margin-field__lock {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      color: var(--subdued);
+      pointer-events: none;
+    }
+
+    .margin-field__lock svg {
+      display: block;
+    }
+
+    .margin-field input {
+      border: none;
+      outline: none;
+      font: inherit;
+      font-size: 12px;
+      line-height: 16px;
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      padding: 0 2px;
+      background: transparent;
+      text-align: right;
+      color: var(--text);
+    }
+
+    .margin-field__suffix {
+      font-size: 12px;
+      color: var(--subdued);
+      flex-shrink: 0;
+      padding-right: 6px;
+    }
+
+    .margin-field--readonly {
+      background: #f4f4f2;
+    }
+
+    .margin-field--readonly input,
+    .margin-field input:disabled {
+      color: var(--subdued);
+      cursor: not-allowed;
+    }
+
+    .detected-value {
+      font-size: 12px;
+      line-height: 16px;
+      padding: 0 8px;
+      flex: 1;
+      color: var(--subdued);
+      text-align: right;
+    }
+
+    .btn-accept {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 2px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-right: 2px;
+    }
+
+    .btn-accept[data-tooltip] {
+      position: relative;
+    }
+
+    .detected-cell-inner:has(.btn-accept[data-tooltip]) {
+      overflow: visible;
+    }
+
+    .grid td.col-detected:has(.btn-accept[data-tooltip]) {
+      overflow: visible;
+    }
+
+    .btn-accept[data-tooltip]::before,
+    .btn-accept[data-tooltip]::after {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      z-index: 20;
+    }
+
+    .btn-accept[data-tooltip]::before {
+      content: attr(data-tooltip);
+      bottom: calc(100% + 7px);
+      padding: 6px 10px;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      white-space: nowrap;
+      border-radius: var(--radius);
+    }
+
+    .btn-accept[data-tooltip]::after {
+      content: "";
+      bottom: calc(100% + 3px);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #333;
+    }
+
+    .btn-accept[data-tooltip]:hover::before,
+    .btn-accept[data-tooltip]:hover::after,
+    .btn-accept[data-tooltip]:focus-visible::before,
+    .btn-accept[data-tooltip]:focus-visible::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .price-field--with-action {
+      padding-right: 2px;
+      overflow: visible;
+    }
+
+    .grid td:has(.price-field--with-action) {
+      overflow: visible;
+    }
+
+    .grid td.col-price-bridge {
+      text-align: center;
+      padding: 0;
+      overflow: visible;
+      vertical-align: middle;
+      height: var(--grid-row-height);
+      min-height: var(--grid-row-height);
+    }
+
+    .apply-bridge-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: var(--grid-row-height);
+      min-height: var(--grid-row-height);
+    }
+
+    .apply-bridge-placeholder {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .price-field--with-action input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .price-field--with-action .btn-accept-combined {
+      margin-right: 2px;
+    }
+
+    .msrp-cell-with-verified {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      padding-right: 2px;
+    }
+
+    .msrp-cell-with-verified .price-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .grid td:has(.msrp-cell-with-verified) {
+      overflow: visible;
+    }
+
+    .btn-accept:hover { background: rgba(0, 0, 0, 0.06); }
+
+    /* layout-5 combined MSRP cell */
+    .col-msrp-combined { min-width: 200px; width: 220px; }
+
+    .grid td.col-msrp-combined {
+      overflow: visible;
+      padding: 0;
+    }
+
+    .msrp-combined {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      width: 100%;
+      height: 100%;
+      min-height: var(--grid-row-height);
+      padding: 0 2px 0 8px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .msrp-combined--mismatch::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 7px 7px 0;
+      border-color: transparent var(--error-dark) transparent transparent;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .msrp-combined:focus-within {
+      outline: 2px solid var(--cell-focus-blue);
+      outline-offset: -2px;
+      background: #fff;
+      z-index: 2;
+      box-shadow: none;
+    }
+
+    .msrp-combined:focus-within::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 5px;
+      height: 5px;
+      background: var(--cell-focus-blue);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .msrp-combined:focus-within.msrp-combined--mismatch::before {
+      top: 2px;
+      right: 2px;
+    }
+
+    .msrp-combined__values {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .msrp-combined__current {
+      color: var(--subdued);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .msrp-combined__input-wrap {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      flex: 0 1 auto;
+      max-width: 88px;
+    }
+
+    .msrp-combined__input-wrap .cur {
+      font-size: 12px;
+      color: var(--subdued);
+      padding: 0 2px 0 0;
+      flex-shrink: 0;
+    }
+
+    .msrp-combined__input-wrap input {
+      border: none;
+      outline: none;
+      font: inherit;
+      font-size: 12px;
+      width: 5.5em;
+      min-width: 0;
+      flex: 0 0 auto;
+      padding: 0;
+      background: transparent;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .msrp-combined__input-wrap--detected input {
+      color: var(--subdued);
+    }
+
+    .msrp-combined:focus-within .msrp-combined__input-wrap--detected input {
+      color: var(--text);
+    }
+
+    .col-msrp-combined__label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .msrp-combined__arrow {
+      display: inline-flex;
+      align-items: center;
+      color: var(--subdued);
+      flex-shrink: 0;
+    }
+
+    .icon-arrow-right {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .btn-accept-combined {
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--grid-line);
+      border-radius: 2px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 0;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .btn-accept-combined[data-tooltip]::before,
+    .msrp-verified-badge[data-tooltip]::before {
+      content: attr(data-tooltip);
+      bottom: calc(100% + 7px);
+      padding: 6px 10px;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      white-space: nowrap;
+      border-radius: var(--radius);
+    }
+
+    .btn-accept-combined[data-tooltip]::after,
+    .msrp-verified-badge[data-tooltip]::after {
+      content: "";
+      bottom: calc(100% + 3px);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #333;
+    }
+
+    .btn-accept-combined[data-tooltip]:hover::before,
+    .btn-accept-combined[data-tooltip]:hover::after,
+    .btn-accept-combined[data-tooltip]:focus-visible::before,
+    .btn-accept-combined[data-tooltip]:focus-visible::after,
+    .msrp-verified-badge[data-tooltip]:hover::before,
+    .msrp-verified-badge[data-tooltip]:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .msrp-verified-badge {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--success);
+      position: relative;
+    }
+
+    .msrp-verified-badge svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-accept-combined[data-tooltip]::before,
+    .msrp-verified-badge[data-tooltip]::before,
+    .btn-accept-combined[data-tooltip]::after,
+    .msrp-verified-badge[data-tooltip]::after {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      z-index: 20;
+    }
+
+    .btn-accept-combined svg {
+      display: block;
+      width: 14px;
+      height: 14px;
+    }
+
+    .btn-accept-combined:hover {
+      background: #f7f7f7;
+      border-color: #bdbdbd;
+    }
+
+    .btn-apply-arrow {
+      width: 24px;
+      height: 24px;
+      border: 1px solid #d9d9d4;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .btn-apply-arrow:hover {
+      background: #f7f7f7;
+      border-color: #bdbdbd;
+    }
+
+    .btn-apply-arrow svg,
+    .btn-apply-arrow .icon-arrow-right {
+      width: 14px;
+      height: 14px;
+    }
+
+    .detected-cell-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2px;
+      width: 100%;
+      height: 100%;
+      min-height: var(--grid-row-height);
+      padding: 0 2px;
+    }
+
+    .col-margin-header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .locked-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .locked-toggle-label {
+      font-size: 11px;
+      line-height: 14px;
+      color: var(--subdued);
+      font-weight: 400;
+    }
+
+    .switch {
+      position: relative;
+      width: 27px;
+      height: 15px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      background: #d3d3ce;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .switch-track::after {
+      content: "";
+      position: absolute;
+      top: 1.5px;
+      left: 1.5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.15s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .switch input:checked + .switch-track { background: #333; }
+    .switch input:checked + .switch-track::after { transform: translateX(12px); }
+
+    input[type="checkbox"] {
+      accent-color: #333;
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      vertical-align: middle;
+    }
+
+    .icon-14 { width: 14px; height: 14px; }
+    .icon-16 { width: 16px; height: 16px; }
+
+    .hidden { display: none !important; }
+
+    /* prototype controls */
+    .proto-panel {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 50;
+      width: 260px;
+      background: #1f1f1f;
+      color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      font-size: 13px;
+    }
+
+    .proto-panel summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .proto-panel summary::-webkit-details-marker { display: none; }
+
+    .proto-panel__body { padding: 2px 14px 14px; background: #262626; }
+
+    .proto-panel button {
+      width: 100%;
+      background: none;
+      border: 1px solid #4a4a4a;
+      color: #e8e8e8;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .proto-panel button:hover { background: #333; }
+
+    .proto-label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a9a9a9;
+      margin: 10px 0 6px;
+      font-weight: 600;
+    }
+
+    .proto-select {
+      width: 100%;
+      background: #1f1f1f;
+      border: 1px solid #4a4a4a;
+      color: #e8e8e8;
+      font-family: inherit;
+      font-size: 12.5px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .proto-note {
+      font-size: 12px;
+      color: #a9a9a9;
+      margin: 8px 0 0;
+      line-height: 1.4;
+    }
+
+    .proto-switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: #e8e8e8;
+    }
+
+    .proto-switch-row .switch-track {
+      background: #4a4a4a;
+    }
+
+    .proto-switch-row .switch input:checked + .switch-track {
+      background: #fff;
+    }
+
+    .proto-switch-row .switch input:checked + .switch-track::after {
+      background: #333;
+    }
+
+    /* arrow icon tour */
+    .tour-popover {
+      position: fixed;
+      z-index: 60;
+      width: min(304px, calc(100vw - 32px));
+      background: #333;
+      color: #fff;
+      border-radius: 6px;
+      padding: 20px 44px 16px 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      box-sizing: border-box;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .tour-popover[hidden] {
+      display: none !important;
+    }
+
+    .tour-popover__pointer {
+      position: absolute;
+      top: -6px;
+      left: var(--tour-pointer-left, 50%);
+      width: 12px;
+      height: 12px;
+      background: #333;
+      transform: translateX(-50%) rotate(45deg);
+    }
+
+    .tour-popover__close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: var(--radius);
+      background: transparent;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .tour-popover__close:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .tour-popover__title {
+      margin: 0;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .tour-popover__body {
+      margin: 8px 0 0;
+      font-size: 14px;
+      line-height: 20px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .tour-popover__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+
+    .tour-popover__step {
+      font-size: 14px;
+      line-height: 20px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .tour-popover__nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tour-popover__nav-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: var(--radius);
+      background: transparent;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .tour-popover__nav-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .tour-popover__nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body class="layout-1 detected-variant-red">
+  <div class="shell">
+    <aside class="nav" aria-label="Primary">
+      <div class="nav-header">
+        <span class="logo">FAIRE</span>
+        <div class="nav-tools">
+          <button type="button" class="icon-btn icon-btn--notify" aria-label="Notifications">
+            <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M14.857 17.082a22.387 22.387 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.456 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+            </svg>
+          </button>
+          <button type="button" class="icon-btn" aria-label="Account">
+            <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.964 0A9 9 0 1 0 6.018 18.725m11.964 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75A3 3 0 1 1 9 9.75a3 3 0 0 1 6 0Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <div class="nav-row"><span>Home</span></div>
+        <div class="nav-row"><span>Orders</span><span class="badge">3</span></div>
+        <div class="nav-row"><span>Messages</span></div>
+        <div class="nav-row nav-row--active"><span>Products</span></div>
+        <div class="nav-child">Bulk upload</div>
+        <div class="nav-child">Inventory</div>
+        <div class="nav-child">Collections</div>
+        <div class="nav-child">Removed</div>
+        <div class="nav-child nav-child--active">Pricing issues</div>
+        <div class="nav-child">Performance</div>
+        <div class="nav-row"><span>Customers</span></div>
+        <div class="nav-row"><span>Marketing</span></div>
+        <div class="nav-row"><span>Analytics</span></div>
+        <div class="nav-row"><span>My shop</span></div>
+        <div class="nav-row"><span>Settings</span></div>
+        <div class="nav-section-label">Sales channels</div>
+        <div class="nav-child">Marketplace</div>
+        <div class="nav-child">Faire Direct</div>
+      </nav>
+      <div class="nav-footer">
+        <div class="nav-child">View shop</div>
+        <div class="nav-child">Help Center</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="main-head">
+        <button class="back-link" type="button" aria-label="Back to products">
+          <svg class="icon-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M15.75 19.5 8.25 12l7.5-7.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Products
+        </button>
+        <div class="title-row">
+          <div>
+            <h1>Resolve pricing issues</h1>
+            <p class="page-desc" id="page-desc"></p>
+          </div>
+          <div class="head-actions">
+            <button class="text-link" type="button">Enter full screen</button>
+            <button class="text-link" type="button">Guide</button>
+            <button class="btn-primary" type="button" id="btn-save" disabled>Save edits</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="toolbar-slot">
+        <div class="toolbar toolbar--selection" id="toolbar-selection" hidden>
+          <div class="toolbar-selection-main">
+            <div class="toolbar-selection-meta">
+              <span class="toolbar-selection-count" id="selection-count">0 selected</span>
+              <button type="button" class="toolbar-selection-clear" id="btn-clear-selection">Clear</button>
+            </div>
+            <div class="toolbar-selection-apply-group">
+              <button type="button" class="btn-apply-selected" id="btn-apply-selected" disabled>Apply detected prices</button>
+              <button type="button" class="toolbar-selection-decline" id="btn-decline-selected" hidden>Decline price updates</button>
+            </div>
+          </div>
+          <div class="toolbar-selection-actions">
+            <button class="toolbar-icon-btn toolbar-icon-btn--surface" type="button" data-toolbar-discard disabled data-tooltip="Discard edits" aria-label="Discard edits">
+              <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="toolbar-icon-btn toolbar-icon-btn--surface" type="button" data-toolbar-undo disabled data-tooltip="Undo" aria-label="Undo">
+              <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14 4 9l5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" stroke-linecap="round"/></svg>
+            </button>
+            <button class="toolbar-icon-btn toolbar-icon-btn--surface" type="button" data-toolbar-redo disabled data-tooltip="Redo" aria-label="Redo">
+              <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m15 14 5-5-5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar toolbar--default" id="toolbar-default">
+          <div class="toolbar-left">
+            <button class="btn-apply-all" type="button" id="btn-apply-all">
+              Apply all detected prices
+            </button>
+            <div class="filter-pills" role="tablist" aria-label="Filter products">
+              <button class="pill pill--active" type="button" data-filter="all" role="tab" aria-selected="true">
+                All <span class="pill-count" id="count-all"></span>
+              </button>
+              <button class="pill" type="button" data-filter="required" role="tab" aria-selected="false">
+                Required <span class="pill-count" id="count-required"></span>
+              </button>
+              <button class="pill hidden" type="button" data-filter="at-risk" role="tab" aria-selected="false" id="pill-at-risk">
+                At risk <span class="pill-count" id="count-at-risk"></span>
+              </button>
+              <button class="pill hidden" type="button" data-filter="resolved" role="tab" aria-selected="false" id="pill-resolved">
+                Resolved
+              </button>
+            </div>
+          </div>
+          <div class="toolbar-right">
+            <button class="toolbar-icon-btn" type="button" data-toolbar-discard disabled data-tooltip="Discard edits" aria-label="Discard edits">
+              <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="toolbar-icon-btn" type="button" data-toolbar-undo disabled data-tooltip="Undo" aria-label="Undo">
+              <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14 4 9l5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" stroke-linecap="round"/></svg>
+            </button>
+            <button class="toolbar-icon-btn" type="button" data-toolbar-redo disabled data-tooltip="Redo" aria-label="Redo">
+              <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m15 14 5-5-5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-wrap">
+        <table class="grid" id="pricing-grid">
+          <thead id="grid-head"></thead>
+          <tbody id="grid-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <details class="proto-panel">
+    <summary>Prototype controls</summary>
+    <div class="proto-panel__body">
+      <label class="proto-label" for="proto-layout-variant">Layout variant</label>
+      <select class="proto-select" id="proto-layout-variant" aria-label="Layout variant">
+        <option value="layout-1">1 — Separate, red/green backgrounds, check on detected</option>
+        <option value="layout-1-1">1.1 — Separate, verified badge on MSRP after accept</option>
+        <option value="layout-2">2 — Separate, green → white backgrounds, check on detected</option>
+        <option value="layout-3">3 — Separate, green corner, check on detected</option>
+        <option value="layout-4">4 — Separate, green corner, arrow between columns</option>
+        <option value="layout-5">5 — Combined MSRP → detected column</option>
+        <option value="layout-5-1">5.1 — Combined, verified badge on accept</option>
+        <option value="layout-6">6 — Separate, green corner, check on current MSRP</option>
+        <option value="layout-7">7 — Separate, green corner, apply in actions column</option>
+      </select>
+      <p class="proto-note">Required and At risk are separate filters. Declining at-risk rows moves them to Resolved.</p>
+      <div class="proto-switch-row">
+        <span>Arrow icon tour on load</span>
+        <label class="switch" aria-label="Show arrow icon tour on page load">
+          <input type="checkbox" id="proto-arrow-tour" />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <div class="tour-popover" id="arrow-tour" role="dialog" aria-labelledby="arrow-tour-title" hidden>
+    <div class="tour-popover__pointer" aria-hidden="true"></div>
+    <button type="button" class="tour-popover__close" id="arrow-tour-close" aria-label="Close tour">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M6 18 18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <h2 class="tour-popover__title" id="arrow-tour-title">Apply individual prices you want to use as your MSRP</h2>
+    <p class="tour-popover__body">This will insert the detected retail price into the MSRP field for the product. You can still edit manually.</p>
+    <div class="tour-popover__footer">
+      <span class="tour-popover__step">3/4</span>
+      <div class="tour-popover__nav">
+        <button type="button" class="tour-popover__nav-btn" disabled aria-label="Previous step">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" class="tour-popover__nav-btn" disabled aria-label="Next step">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const THUMB_COLORS = ["#e8d5c4", "#d4e8d4", "#d4d8e8", "#e8d4d4", "#e8e4d4", "#d4e8e8"];
+    const LAYOUT_VARIANT_KEY = "evergreen-price-enforcement-layout-variant";
+    const ARROW_TOUR_KEY = "evergreen-price-enforcement-arrow-tour";
+    const LAYOUT_VARIANTS = [
+      "layout-1",
+      "layout-1-1",
+      "layout-2",
+      "layout-3",
+      "layout-4",
+      "layout-5",
+      "layout-5-1",
+      "layout-6",
+      "layout-7",
+    ];
+
+    function checkIconSvg() {
+      return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
+    function arrowRightIconSvg() {
+      return `<svg class="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M5 12h14m0 0-4-4m4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
+    function combinedMsrpHeaderHtml() {
+      return `<span class="col-msrp-combined__label">Current MSRP ${arrowRightIconSvg()} Detected: USD</span>`;
+    }
+
+    function verifiedBadgeIconSvg() {
+      return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
+    function lockIconSvg() {
+      return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
+    function unlockIconSvg() {
+      return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M13.5 10.5V6.75a4.5 4.5 0 0 0-6.77-3.77 4.5 4.5 0 0 0 1.5 6.37V10.5m3 0h6.75a2.25 2.25 0 0 1 2.25 2.25v6.75a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5v-6.75A2.25 2.25 0 0 1 6.75 10.5Z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
+    function marginHeaderHtml() {
+      return `<div class="col-margin-header">
+        <span>Margin</span>
+        ${lockedHeaderHtml()}
+      </div>`;
+    }
+
+    function applyLayoutVariant(variant) {
+      layoutVariant = variant;
+      document.body.classList.remove(
+        "layout-1",
+        "layout-1-1",
+        "layout-2",
+        "layout-3",
+        "layout-4",
+        "layout-5",
+        "layout-5-1",
+        "layout-6",
+        "layout-7",
+        "detected-variant-red",
+        "detected-variant-green"
+      );
+      if (variant === "layout-1") {
+        document.body.classList.add("layout-1", "detected-variant-red");
+      } else if (variant === "layout-1-1") {
+        document.body.classList.add("layout-1-1", "detected-variant-red");
+      } else if (variant === "layout-2") {
+        document.body.classList.add("layout-2", "detected-variant-green");
+      } else if (variant === "layout-3") {
+        document.body.classList.add("layout-3");
+      } else if (variant === "layout-4") {
+        document.body.classList.add("layout-4");
+      } else if (variant === "layout-5") {
+        document.body.classList.add("layout-5");
+      } else if (variant === "layout-5-1") {
+        document.body.classList.add("layout-5-1");
+      } else if (variant === "layout-6") {
+        document.body.classList.add("layout-6");
+      } else if (variant === "layout-7") {
+        document.body.classList.add("layout-7", "detected-variant-red");
+      }
+      try {
+        localStorage.setItem(LAYOUT_VARIANT_KEY, variant);
+      } catch (_) { /* ignore quota / private mode */ }
+      syncLayoutVariantUrl(variant);
+      const layoutSelect = document.getElementById("proto-layout-variant");
+      if (layoutSelect) layoutSelect.value = variant;
+      updateGridHeader();
+      render();
+    }
+
+    function layoutVariantFromUrl() {
+      try {
+        const variant = new URL(window.location.href).searchParams.get("variant");
+        if (variant && LAYOUT_VARIANTS.includes(variant)) return variant;
+      } catch (_) { /* ignore */ }
+      return null;
+    }
+
+    function syncLayoutVariantUrl(variant) {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("variant") === variant) return;
+        url.searchParams.set("variant", variant);
+        history.replaceState({ layoutVariant: variant }, "", url);
+      } catch (_) { /* ignore */ }
+    }
+
+    function initialLayoutVariant() {
+      const fromUrl = layoutVariantFromUrl();
+      if (fromUrl) return fromUrl;
+      try {
+        const stored = localStorage.getItem(LAYOUT_VARIANT_KEY);
+        if (stored && LAYOUT_VARIANTS.includes(stored)) return stored;
+      } catch (_) { /* ignore */ }
+      return "layout-1";
+    }
+
+    function lockedHeaderHtml() {
+      return `<div class="locked-toggle-wrap">
+        <span class="locked-toggle-label">Locked</span>
+        <label class="switch" aria-label="Toggle all locked">
+          <input type="checkbox" id="toggle-all-locked" />
+          <span class="switch-track"></span>
+        </label>
+      </div>`;
+    }
+
+    function updateGridHeader() {
+      const thead = document.getElementById("grid-head");
+      const marginHeader = marginHeaderHtml();
+      const commonStart = `
+        <th class="col-check col-freeze col-freeze-1"><input type="checkbox" id="select-all" aria-label="Select all" /></th>
+        <th class="col-status col-freeze col-freeze-2" aria-label="Status"></th>
+        <th class="col-product col-freeze col-freeze-3">Product</th>
+        <th class="col-variants">Variants</th>`;
+
+      if (layoutVariant === "layout-5" || layoutVariant === "layout-5-1") {
+        thead.innerHTML = `<tr>${commonStart}
+          <th class="col-price col-msrp-combined">${combinedMsrpHeaderHtml()}</th>
+          <th class="col-price">Wholesale: USD</th>
+          <th class="col-margin">${marginHeader}</th>
+        </tr>`;
+      } else if (layoutVariant === "layout-6") {
+        thead.innerHTML = `<tr>${commonStart}
+          <th class="col-price">Detected retail: USD</th>
+          <th class="col-price">MSRP: USD</th>
+          <th class="col-price">Wholesale: USD</th>
+          <th class="col-margin">${marginHeader}</th>
+        </tr>`;
+      } else if (layoutVariant === "layout-4") {
+        thead.innerHTML = `<tr>${commonStart}
+          <th class="col-price">Detected retail: USD</th>
+          <th class="col-price-bridge" aria-hidden="true"></th>
+          <th class="col-price">MSRP: USD</th>
+          <th class="col-price">Wholesale: USD</th>
+          <th class="col-margin">${marginHeader}</th>
+        </tr>`;
+      } else if (layoutVariant === "layout-7") {
+        thead.innerHTML = `<tr>${commonStart}
+          <th class="col-price">Detected retail: USD</th>
+          <th class="col-price">MSRP: USD</th>
+          <th class="col-price">Wholesale: USD</th>
+          <th class="col-margin">${marginHeader}</th>
+          <th class="col-actions">Actions</th>
+        </tr>`;
+      } else {
+        thead.innerHTML = `<tr>${commonStart}
+          <th class="col-price">Detected retail: USD</th>
+          <th class="col-price">MSRP: USD</th>
+          <th class="col-price">Wholesale: USD</th>
+          <th class="col-margin">${marginHeader}</th>
+        </tr>`;
+      }
+
+      const toggle = document.getElementById("toggle-all-locked");
+      if (toggle) syncToggleAllLocked();
+    }
+
+    function onToggleAllLocked(e) {
+      pushUndo();
+      setAllRowsLocked(e.target.checked);
+      dirty = true;
+      render();
+      updateSaveState();
+    }
+
+    function makeThumb(seed) {
+      const c = THUMB_COLORS[seed % THUMB_COLORS.length];
+      return `data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="36" height="36" fill="${c}"/><rect x="8" y="10" width="20" height="16" rx="2" fill="#fff" opacity="0.5"/></svg>`
+      )}`;
+    }
+
+    function initialRows() {
+      const flat = [
+        { id: "p1", name: "Dip Dye Lollipop Candle", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p2", name: "Dip Dye Candle Twisted Rose Garden", detected: 26, msrp: 30, wholesale: 15 },
+        { id: "p3", name: "Candle The Rose", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p4", name: "Candle The Lips Pink", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p5", name: "Candle The Lips Lavender", detected: 11, msrp: 12, wholesale: 6 },
+        {
+          id: "p6",
+          name: "Bubble Heart Candle",
+          isGroup: true,
+          expanded: true,
+          children: [
+            { id: "p6a", name: "Pink: S/M/L", detected: 18, msrp: 20, wholesale: 10 },
+            { id: "p6b", name: "Green: S/M/L", detected: 18, msrp: 20, wholesale: 10 },
+            { id: "p6c", name: "Blue: S/M/L", detected: 18, msrp: 20, wholesale: 10 },
+          ],
+        },
+        { id: "p7", name: "Candleholder Donut Stars", detected: 18, msrp: 20, wholesale: 10 },
+        { id: "p8", name: "Candleholder Donut Happy", detected: 18, msrp: 20, wholesale: 10 },
+        { id: "p9", name: "Dip Dye Candle XL One in a Melon", detected: 35, msrp: 40, wholesale: 20 },
+        { id: "p10", name: "Dip Dye Candle XL Totally Flamazing", detected: 35, msrp: 40, wholesale: 20 },
+        { id: "p11", name: "Dip Dye Candle Twisted Under the Sea", detected: 26, msrp: 30, wholesale: 15 },
+        { id: "p12", name: "Dip Dye Candle Small Shellberate", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p13", name: "Dip Dye Candle Tulip", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p14", name: "Candle The Greek Slim Medium Orange", detected: 18, msrp: 20, wholesale: 10 },
+        { id: "p15", name: "Candle The Greek Big Medium Lavender", detected: 35, msrp: 40, wholesale: 20 },
+        { id: "p16", name: "Candle The Greek Big Medium Pink", detected: 35, msrp: 40, wholesale: 20 },
+        { id: "p17", name: "Dip Dye Candle Twisted Candy", detected: 26, msrp: 30, wholesale: 15 },
+        { id: "p18", name: "Candle The Lips Red", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p19", name: "Bubble Heart Candle Mini", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p20", name: "Candleholder Donut Love", detected: 18, msrp: 20, wholesale: 10 },
+        { id: "p21", name: "Dip Dye Candle Small Peach", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p22", name: "Candle The Greek Slim Small Blue", detected: 11, msrp: 12, wholesale: 6 },
+        { id: "p23", name: "Dip Dye Lollipop Candle Mint", detected: 11, msrp: 12, wholesale: 6 },
+      ];
+
+      let seed = 0;
+      const result = flat.map((item) => {
+        if (item.isGroup) {
+          const group = {
+            ...item,
+            thumb: makeThumb(seed++),
+            children: item.children.map((c) => ({
+              ...c,
+              thumb: makeThumb(seed++),
+              initialMsrp: c.msrp,
+              isVariant: true,
+              parentId: item.id,
+            })),
+          };
+          return group;
+        }
+        return { ...item, thumb: makeThumb(seed++), initialMsrp: item.msrp };
+      });
+
+      result.forEach((r) => {
+        if (r.isGroup) r.children.forEach((c) => setRowLocked(c, true));
+        else setRowLocked(r, true);
+      });
+
+      const leaves = [];
+      result.forEach((r) => {
+        if (r.isGroup) r.children.forEach((c) => leaves.push(c));
+        else leaves.push(r);
+      });
+      leaves.slice(-9).forEach((row) => {
+        row.issueCategory = "at-risk";
+        const detected = Number(row.detected);
+        row.msrp = detected + 1;
+        row.initialMsrp = row.msrp;
+      });
+
+      return result;
+    }
+
+    let rows = initialRows();
+    let savedSnapshot = null;
+    let activeFilter = "all";
+    let layoutVariant = "layout-1";
+    let dirty = false;
+    const selectedIds = new Set();
+    const undoStack = [];
+    const redoStack = [];
+
+    function flattenEditable(items) {
+      const out = [];
+      items.forEach((r) => {
+        if (r.isGroup) {
+          out.push(r);
+          if (r.expanded) r.children.forEach((c) => out.push(c));
+        } else {
+          out.push(r);
+        }
+      });
+      return out;
+    }
+
+    function allLeafRows() {
+      const out = [];
+      rows.forEach((r) => {
+        if (r.isGroup) r.children.forEach((c) => out.push(c));
+        else out.push(r);
+      });
+      return out;
+    }
+
+    function marginPctValue(msrp, wholesale) {
+      if (!msrp || msrp <= 0) return 0;
+      return Math.round(((msrp - wholesale) / msrp) * 100);
+    }
+
+    function wholesaleFromMarginPct(msrp, pct) {
+      return Math.round(msrp * (1 - pct / 100) * 100) / 100;
+    }
+
+    function wholesaleForRow(row, msrp) {
+      if (row.locked && row.lockedMarginPct != null) {
+        return wholesaleFromMarginPct(msrp, row.lockedMarginPct);
+      }
+      return wholesaleFromMarginPct(msrp, marginPctValue(msrp, row.wholesale));
+    }
+
+    function setRowLocked(row, locked) {
+      row.locked = locked;
+      if (locked) {
+        row.lockedMarginPct = marginPctValue(row.msrp, row.wholesale);
+        row.wholesale = wholesaleFromMarginPct(row.msrp, row.lockedMarginPct);
+      } else {
+        row.lockedMarginPct = null;
+      }
+    }
+
+    function setAllRowsLocked(locked) {
+      rows.forEach((r) => {
+        if (r.isGroup) r.children.forEach((c) => setRowLocked(c, locked));
+        else setRowLocked(r, locked);
+      });
+    }
+
+    function syncToggleAllLocked() {
+      const leaves = allLeafRows();
+      const allLocked = leaves.length > 0 && leaves.every((r) => r.locked);
+      document.getElementById("toggle-all-locked").checked = allLocked;
+    }
+
+    function marginCellHtml(row) {
+      const displayPct = row.locked && row.lockedMarginPct != null
+        ? row.lockedMarginPct
+        : marginPctValue(row.msrp, row.wholesale);
+      const lockedClass = row.locked ? " margin-field--readonly" : "";
+      const disabled = row.locked ? " disabled" : "";
+      return `<div class="margin-field${lockedClass}">
+        <input type="number" step="1" min="0" max="100" value="${displayPct}" data-field="margin" data-id="${row.id}" aria-label="Margin for ${row.name}"${disabled} />
+        <span class="margin-field__suffix">%</span>
+        <span class="margin-field__lock" aria-hidden="true">
+          ${row.locked ? lockIconSvg() : unlockIconSvg()}
+        </span>
+      </div>`;
+    }
+
+    function isDeclined(row) {
+      return row.declinedAtRisk === true;
+    }
+
+    function isResolved(row) {
+      return Number(row.msrp) === Number(row.detected);
+    }
+
+    function isAtRisk(row) {
+      return isRequired(row) && row.issueCategory === "at-risk";
+    }
+
+    function isEgregiousRequired(row) {
+      return isRequired(row) && row.issueCategory !== "at-risk";
+    }
+
+    function isRequired(row) {
+      return !isResolved(row) && !isDeclined(row);
+    }
+
+    function isHandled(row) {
+      return isResolved(row) || isDeclined(row);
+    }
+
+    function formatMoney(n) {
+      return Number(n).toFixed(2);
+    }
+
+    function snapshot() {
+      return JSON.stringify(rows);
+    }
+
+    function pushUndo() {
+      undoStack.push(snapshot());
+      redoStack.length = 0;
+      updateUndoRedo();
+    }
+
+    function restoreFromSnapshot(s) {
+      rows = JSON.parse(s);
+      dirty = true;
+      render();
+      updateSaveState();
+    }
+
+    function counts() {
+      const leaves = allLeafRows();
+      const required = leaves.filter(isEgregiousRequired).length;
+      const atRisk = leaves.filter(isAtRisk).length;
+      const resolved = leaves.filter(isResolved).length;
+      const handled = leaves.filter(isHandled).length;
+      const unresolved = leaves.filter(isRequired).length;
+      return { all: leaves.length, required, atRisk, resolved, handled, unresolved };
+    }
+
+    function updateCounts() {
+      const c = counts();
+      document.getElementById("count-all").textContent = c.all;
+      document.getElementById("count-required").textContent = c.required;
+      document.getElementById("count-at-risk").textContent = c.atRisk;
+
+      const pillAtRisk = document.getElementById("pill-at-risk");
+      pillAtRisk.classList.toggle("hidden", c.atRisk === 0);
+
+      const pillResolved = document.getElementById("pill-resolved");
+      pillResolved.classList.toggle("hidden", c.handled === 0);
+
+      document.getElementById("page-desc").innerHTML =
+        `<strong>Required: Update ${c.unresolved} product${c.unresolved === 1 ? "" : "s"} by August 18 to avoid them having ranked lower.</strong> Apply detected retail prices as your MSRP, or if you believe there is an error, <button type="button" class="page-desc__link">submit an appeal</button>.`;
+
+      const btnApplyAll = document.getElementById("btn-apply-all");
+      btnApplyAll.disabled = c.unresolved === 0;
+    }
+
+    function setToolbarBtnsDisabled(selector, disabled) {
+      document.querySelectorAll(selector).forEach((btn) => {
+        btn.disabled = disabled;
+      });
+    }
+
+    function updateSaveState() {
+      document.getElementById("btn-save").disabled = !dirty;
+      setToolbarBtnsDisabled("[data-toolbar-discard]", !dirty);
+    }
+
+    function visibleLeafRows() {
+      return allLeafRows().filter(rowVisible);
+    }
+
+    function selectionIsOnlyAtRisk() {
+      if (selectedIds.size === 0) return false;
+      return [...selectedIds].every((id) => {
+        const row = findRow(id);
+        return row && isAtRisk(row);
+      });
+    }
+
+    function updateSelectionToolbar() {
+      const hasSelection = selectedIds.size > 0;
+      const toolbarDefault = document.getElementById("toolbar-default");
+      const toolbarSelection = document.getElementById("toolbar-selection");
+
+      toolbarDefault.toggleAttribute("hidden", hasSelection);
+      toolbarSelection.toggleAttribute("hidden", !hasSelection);
+
+      if (hasSelection) {
+        document.getElementById("selection-count").textContent =
+          `${selectedIds.size} selected`;
+      }
+
+      const selectedRequired = [...selectedIds].filter((id) => {
+        const row = findRow(id);
+        return row && isRequired(row);
+      });
+      document.getElementById("btn-apply-selected").disabled = selectedRequired.length === 0;
+
+      const btnDecline = document.getElementById("btn-decline-selected");
+      btnDecline.hidden = !selectionIsOnlyAtRisk();
+    }
+
+    function syncRowSelectionUI() {
+      document.querySelectorAll("input[data-select]").forEach((cb) => {
+        const id = cb.dataset.select;
+        const selected = selectedIds.has(id);
+        cb.checked = selected;
+        const tr = cb.closest("tr");
+        if (tr) tr.classList.toggle("row-selected", selected);
+      });
+
+      const selectAll = document.getElementById("select-all");
+      const visible = visibleLeafRows();
+      if (selectAll) {
+        const allSelected = visible.length > 0 && visible.every((r) => selectedIds.has(r.id));
+        const someSelected = visible.some((r) => selectedIds.has(r.id));
+        selectAll.checked = allSelected;
+        selectAll.indeterminate = someSelected && !allSelected;
+      }
+    }
+
+    function clearSelection() {
+      selectedIds.clear();
+      updateSelectionToolbar();
+      syncRowSelectionUI();
+    }
+
+    function handleRowSelectChange(id, checked) {
+      if (checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+      updateSelectionToolbar();
+      syncRowSelectionUI();
+    }
+
+    function handleSelectAllChange(checked) {
+      const visible = visibleLeafRows();
+      visible.forEach((row) => {
+        if (checked) selectedIds.add(row.id);
+        else selectedIds.delete(row.id);
+      });
+      updateSelectionToolbar();
+      syncRowSelectionUI();
+    }
+
+    function updateUndoRedo() {
+      setToolbarBtnsDisabled("[data-toolbar-undo]", undoStack.length === 0);
+      setToolbarBtnsDisabled("[data-toolbar-redo]", redoStack.length === 0);
+    }
+
+    function rowVisible(row) {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "required") return isEgregiousRequired(row);
+      if (activeFilter === "at-risk") return isAtRisk(row);
+      if (activeFilter === "resolved") return isHandled(row);
+      return true;
+    }
+
+    function statusIconHtml(row) {
+      if (isResolved(row) || isDeclined(row)) return "";
+      if (isAtRisk(row)) {
+        return `<span class="status-icon status-icon--at-risk" aria-label="At risk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M12 9v3.75m0 3.75h.008M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>`;
+      }
+      return `<span class="status-icon status-icon--error" aria-label="Required change">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>`;
+    }
+
+    function detectedCellDisplayHtml(row, greenCorner = true) {
+      const resolved = isResolved(row);
+      const stateClass = resolved ? "detected-cell-inner--resolved" : "detected-cell-inner--mismatch";
+      const cornerClass = greenCorner ? " detected-cell-inner--green-corner" : "";
+      return `<div class="detected-cell-inner ${stateClass}${cornerClass}">
+        <span class="detected-value">$${formatMoney(row.detected)}</span>
+      </div>`;
+    }
+
+    function detectedCellHtmlLayout3(row) {
+      const resolved = isResolved(row);
+      const checkSvg = checkIconSvg();
+      const stateClass = resolved ? "detected-cell-inner--resolved" : "detected-cell-inner--mismatch";
+
+      if (resolved) {
+        return `<div class="detected-cell-inner ${stateClass} detected-cell-inner--green-corner">
+          <span class="detected-value">$${formatMoney(row.detected)}</span>
+        </div>`;
+      }
+
+      return `<div class="detected-cell-inner ${stateClass} detected-cell-inner--green-corner">
+        <span class="detected-value">$${formatMoney(row.detected)}</span>
+        <button type="button" class="btn-accept" data-accept="${row.id}" data-tooltip="Update MSRP to use detected price" aria-label="Update MSRP to use detected price for ${row.name}">
+          ${checkSvg}
+        </button>
+      </div>`;
+    }
+
+    function applyActionCellHtml(row) {
+      if (isResolved(row)) return "";
+      return `<button type="button" class="btn-secondary" data-accept="${row.id}" aria-label="Apply detected price for ${row.name}">${checkIconSvg()}Apply detected price</button>`;
+    }
+
+    function detectedCellHtml(row) {
+      const resolved = isResolved(row);
+      const checkSvg = checkIconSvg();
+
+      if (resolved) {
+        return `<div class="detected-cell-inner detected-cell-inner--resolved">
+          <span class="detected-value">$${formatMoney(row.detected)}</span>
+        </div>`;
+      }
+
+      return `<div class="detected-cell-inner detected-cell-inner--mismatch">
+        <span class="detected-value">$${formatMoney(row.detected)}</span>
+        <button type="button" class="btn-accept" data-accept="${row.id}" aria-label="Apply detected price to MSRP for ${row.name}">
+          ${checkSvg}
+        </button>
+      </div>`;
+    }
+
+    function detectedCellClass(row) {
+      if (layoutVariant === "layout-4") return "col-detected";
+      return isResolved(row) ? "col-detected col-detected--resolved" : "col-detected col-detected--mismatch";
+    }
+
+    function applyBridgeCellHtml(row) {
+      if (isResolved(row)) {
+        return `<div class="apply-bridge-cell"><span class="apply-bridge-placeholder" aria-hidden="true"></span></div>`;
+      }
+      return `<div class="apply-bridge-cell"><button type="button" class="btn-accept-combined btn-apply-arrow" data-accept="${row.id}" data-tooltip="Apply detected retail price as MSRP" aria-label="Apply detected retail price as MSRP for ${row.name}">
+        ${arrowRightIconSvg()}
+      </button></div>`;
+    }
+
+    function currentMsrpCellHtmlLayout6(row) {
+      const resolved = isResolved(row);
+      const mismatchClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      const actionClass = resolved ? "" : " price-field--with-action";
+
+      if (resolved) {
+        return `<div class="price-field ${mismatchClass}">
+          <span class="cur">$</span>
+          <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="Current MSRP for ${row.name}" />
+        </div>`;
+      }
+
+      return `<div class="price-field ${mismatchClass}${actionClass}">
+        <span class="cur">$</span>
+        <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="Current MSRP for ${row.name}" />
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+          ${checkIconSvg()}
+        </button>
+      </div>`;
+    }
+
+    function combinedMsrpRightValue(row) {
+      const listed = row.initialMsrp ?? row.msrp;
+      if (isResolved(row)) return formatMoney(row.msrp);
+      if (row.msrp !== listed) return formatMoney(row.msrp);
+      return formatMoney(row.detected);
+    }
+
+    function combinedMsrpRightInputHtml(row, detectedSide = false) {
+      const detectedClass = detectedSide ? " msrp-combined__input-wrap--detected" : "";
+      return `<div class="msrp-combined__input-wrap${detectedClass}">
+        <span class="cur">$</span>
+        <input type="number" step="0.01" min="0" value="${combinedMsrpRightValue(row)}" data-field="msrp" data-id="${row.id}" aria-label="Detected price for ${row.name}" />
+      </div>`;
+    }
+
+    function combinedMsrpCellHtml(row) {
+      const resolved = isResolved(row);
+
+      if (resolved) {
+        return `<div class="msrp-combined">
+          <div class="msrp-combined__values">${combinedMsrpRightInputHtml(row)}</div>
+        </div>`;
+      }
+
+      return `<div class="msrp-combined msrp-combined--mismatch">
+        <div class="msrp-combined__values">
+          <span class="msrp-combined__current">$${formatMoney(row.initialMsrp ?? row.msrp)}</span>
+          <span class="msrp-combined__arrow" aria-hidden="true">${arrowRightIconSvg()}</span>
+          ${combinedMsrpRightInputHtml(row, true)}
+        </div>
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+          ${checkIconSvg()}
+        </button>
+      </div>`;
+    }
+
+    function combinedMsrpCellHtmlLayout51(row) {
+      const resolved = isResolved(row);
+      const listed = formatMoney(row.initialMsrp ?? row.msrp);
+      const valuesHtml = `<span class="msrp-combined__current">$${listed}</span>
+          <span class="msrp-combined__arrow" aria-hidden="true">${arrowRightIconSvg()}</span>
+          ${combinedMsrpRightInputHtml(row, true)}`;
+
+      if (resolved) {
+        return `<div class="msrp-combined">
+          <div class="msrp-combined__values">${valuesHtml}</div>
+          <span class="msrp-verified-badge" data-tooltip="Will show to retailers as having a verified MSRP" aria-label="Verified MSRP for ${row.name}">
+            ${verifiedBadgeIconSvg()}
+          </span>
+        </div>`;
+      }
+
+      return `<div class="msrp-combined msrp-combined--mismatch">
+        <div class="msrp-combined__values">${valuesHtml}</div>
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+          ${checkIconSvg()}
+        </button>
+      </div>`;
+    }
+
+    function priceColumnsHtml(row, isGroupHeader) {
+      if (isGroupHeader) {
+        if (layoutVariant === "layout-5" || layoutVariant === "layout-5-1") {
+          return `<td class="col-msrp-combined"></td><td></td>`;
+        }
+        if (layoutVariant === "layout-6" || layoutVariant === "layout-7" || layoutVariant === "layout-4") {
+          if (layoutVariant === "layout-4") {
+            return `<td class="col-detected"></td><td class="col-price-bridge"></td><td></td>`;
+          }
+          return `<td class="col-detected"></td><td></td>`;
+        }
+        return `<td class="col-detected"></td><td></td>`;
+      }
+
+      if (layoutVariant === "layout-5") {
+        return `<td class="col-msrp-combined">${combinedMsrpCellHtml(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-5-1") {
+        return `<td class="col-msrp-combined">${combinedMsrpCellHtmlLayout51(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-6") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellDisplayHtml(row)}</td>
+          <td>${currentMsrpCellHtmlLayout6(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-7") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellDisplayHtml(row)}</td>
+          <td>${msrpCellHtml(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-4") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellDisplayHtml(row, false)}</td>
+          <td class="col-price-bridge">${applyBridgeCellHtml(row)}</td>
+          <td class="col-price">${msrpCellHtmlLayout4(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-3") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellHtmlLayout3(row)}</td>
+          <td>${msrpCellHtml(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-1-1") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellHtml(row)}</td>
+          <td>${msrpCellHtmlLayout11(row)}</td>`;
+      }
+
+      return `<td class="${detectedCellClass(row)}">${detectedCellHtml(row)}</td>
+        <td>${msrpCellHtml(row)}</td>`;
+    }
+
+    function msrpCellHtmlLayout4(row) {
+      const resolved = isResolved(row);
+      const stateClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      return `<div class="price-field ${stateClass}">
+        <span class="cur">$</span>
+        <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="MSRP for ${row.name}" />
+      </div>`;
+    }
+
+    function msrpCellHtml(row) {
+      const resolved = isResolved(row);
+      const mismatchClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      return `<div class="price-field ${mismatchClass}">
+        <span class="cur">$</span>
+        <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="MSRP for ${row.name}" />
+      </div>`;
+    }
+
+    function msrpCellHtmlLayout11(row) {
+      const resolved = isResolved(row);
+      const mismatchClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      const fieldHtml = `<div class="price-field ${mismatchClass}">
+        <span class="cur">$</span>
+        <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="MSRP for ${row.name}" />
+      </div>`;
+
+      if (!resolved) return fieldHtml;
+
+      return `<div class="msrp-cell-with-verified">
+        ${fieldHtml}
+        <span class="msrp-verified-badge" data-tooltip="Will show to retailers as having a verified MSRP" aria-label="Verified MSRP for ${row.name}">
+          ${verifiedBadgeIconSvg()}
+        </span>
+      </div>`;
+    }
+
+    function wholesaleCellHtml(row) {
+      return `<div class="price-field">
+        <span class="cur">$</span>
+        <input type="number" step="0.01" min="0" value="${formatMoney(row.wholesale)}" data-field="wholesale" data-id="${row.id}" aria-label="Wholesale for ${row.name}" />
+      </div>`;
+    }
+
+    function buildRowTr(row, opts = {}) {
+      const { isVariant = false, isGroupHeader = false, variantCount = 0 } = opts;
+      const resolved = isGroupHeader ? false : isResolved(row);
+      const hidden = isGroupHeader
+        ? !rowVisible(row) && !row.children.some((c) => rowVisible(c))
+        : !rowVisible(row);
+
+      const tr = document.createElement("tr");
+      tr.dataset.id = row.id;
+      if (isVariant) tr.classList.add("row-variant");
+      if (isGroupHeader) tr.classList.add("row-group");
+      if (hidden) tr.classList.add("hidden");
+      if (!isGroupHeader && selectedIds.has(row.id)) tr.classList.add("row-selected");
+
+      const nameCell = isVariant
+        ? `<span class="product-name product-name--variant">${row.name}</span>`
+        : isGroupHeader
+          ? `<div class="product-cell">
+              <button type="button" class="group-toggle${row.expanded ? "" : " collapsed"}" data-toggle-group="${row.id}" aria-label="Toggle variants">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <img class="product-thumb" src="${row.thumb}" alt="" />
+              <span class="product-name">${row.name}</span>
+            </div>`
+          : `<div class="product-cell">
+              <img class="product-thumb" src="${row.thumb}" alt="" />
+              <span class="product-name">${row.name}</span>
+            </div>`;
+
+      const statusCell = isGroupHeader
+        ? ""
+        : statusIconHtml(row);
+
+      const variantsCell = isGroupHeader ? String(variantCount) : "—";
+
+      tr.innerHTML = `
+        <td class="col-check col-freeze col-freeze-1">${isGroupHeader ? "" : `<input type="checkbox" data-select="${row.id}" aria-label="Select ${row.name}"${selectedIds.has(row.id) ? " checked" : ""} />`}</td>
+        <td class="col-status col-freeze col-freeze-2">${statusCell}</td>
+        <td class="col-product col-freeze col-freeze-3">${nameCell}</td>
+        <td class="col-variants">${variantsCell}</td>
+        ${priceColumnsHtml(row, isGroupHeader)}
+        <td class="col-price">${isGroupHeader ? "" : wholesaleCellHtml(row)}</td>
+        <td class="col-margin">${isGroupHeader ? "" : marginCellHtml(row)}</td>
+        ${layoutVariant === "layout-7" ? `<td class="col-actions">${isGroupHeader ? "" : applyActionCellHtml(row)}</td>` : ""}
+      `;
+
+      return tr;
+    }
+
+    function findRow(id) {
+      for (const r of rows) {
+        if (r.id === id) return r;
+        if (r.isGroup) {
+          const c = r.children.find((ch) => ch.id === id);
+          if (c) return c;
+        }
+      }
+      return null;
+    }
+
+    function render() {
+      const tbody = document.getElementById("grid-body");
+      tbody.innerHTML = "";
+
+      rows.forEach((row) => {
+        if (row.isGroup) {
+          const groupTr = buildRowTr(row, { isGroupHeader: true, variantCount: row.children.length });
+          tbody.appendChild(groupTr);
+          if (row.expanded) {
+            row.children.forEach((child) => {
+              const childTr = buildRowTr(child, { isVariant: true });
+              if (!rowVisible(child)) childTr.classList.add("hidden");
+              tbody.appendChild(childTr);
+            });
+          }
+        } else {
+          tbody.appendChild(buildRowTr(row));
+        }
+      });
+
+      updateCounts();
+      syncToggleAllLocked();
+      bindGridEvents();
+      syncRowSelectionUI();
+      updateSelectionToolbar();
+      updateArrowTour();
+    }
+
+    let arrowTourDismissed = false;
+
+    function isArrowTourEnabled() {
+      try {
+        return localStorage.getItem(ARROW_TOUR_KEY) !== "false";
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function setArrowTourEnabled(enabled) {
+      try {
+        localStorage.setItem(ARROW_TOUR_KEY, enabled ? "true" : "false");
+      } catch (_) { /* ignore */ }
+      const toggle = document.getElementById("proto-arrow-tour");
+      if (toggle) toggle.checked = enabled;
+      if (!enabled) arrowTourDismissed = true;
+      updateArrowTour();
+    }
+
+    function syncArrowTourToggle() {
+      const toggle = document.getElementById("proto-arrow-tour");
+      if (toggle) toggle.checked = isArrowTourEnabled();
+    }
+
+    function positionArrowTour() {
+      const tour = document.getElementById("arrow-tour");
+      const target = document.querySelector(".btn-apply-arrow");
+      if (!tour || tour.hidden) return;
+
+      if (!target || layoutVariant !== "layout-4") {
+        tour.hidden = true;
+        return;
+      }
+
+      tour.hidden = false;
+      const targetRect = target.getBoundingClientRect();
+      const tourWidth = tour.offsetWidth;
+      const gap = 10;
+      let left = targetRect.left + targetRect.width / 2 - tourWidth / 2;
+      const maxLeft = window.innerWidth - tourWidth - 16;
+      left = Math.max(16, Math.min(left, maxLeft));
+      const top = targetRect.bottom + gap;
+
+      tour.style.left = `${left}px`;
+      tour.style.top = `${top}px`;
+      tour.style.setProperty(
+        "--tour-pointer-left",
+        `${targetRect.left + targetRect.width / 2 - left}px`
+      );
+    }
+
+    function updateArrowTour() {
+      const tour = document.getElementById("arrow-tour");
+      if (!tour) return;
+
+      const shouldShow =
+        isArrowTourEnabled() &&
+        !arrowTourDismissed &&
+        layoutVariant === "layout-4" &&
+        document.querySelector(".btn-apply-arrow");
+
+      if (!shouldShow) {
+        tour.hidden = true;
+        return;
+      }
+
+      tour.hidden = false;
+      requestAnimationFrame(positionArrowTour);
+    }
+
+    function applySelectedDetected() {
+      const targets = [...selectedIds].map(findRow).filter((r) => r && isRequired(r));
+      if (!targets.length) return;
+      pushUndo();
+      targets.forEach((row) => {
+        row.msrp = row.detected;
+        if (row.locked) row.wholesale = wholesaleForRow(row, row.detected);
+      });
+      dirty = true;
+      render();
+      updateSaveState();
+    }
+
+    function declineSelectedAtRisk() {
+      const targets = [...selectedIds].map(findRow).filter((r) => r && isAtRisk(r));
+      if (!targets.length) return;
+      pushUndo();
+      targets.forEach((row) => {
+        row.declinedAtRisk = true;
+      });
+      dirty = true;
+      render();
+      updateSaveState();
+    }
+
+    function acceptDetected(id) {
+      const row = findRow(id);
+      if (!row || isResolved(row)) return;
+      pushUndo();
+      row.msrp = row.detected;
+      if (row.locked) row.wholesale = wholesaleForRow(row, row.detected);
+      dirty = true;
+      render();
+      updateSaveState();
+    }
+
+    function applyAllDetected() {
+      const leaves = allLeafRows().filter(isRequired);
+      if (!leaves.length) return;
+      pushUndo();
+      leaves.forEach((row) => {
+        row.msrp = row.detected;
+        if (row.locked) row.wholesale = wholesaleForRow(row, row.detected);
+      });
+      dirty = true;
+      render();
+      updateSaveState();
+    }
+
+    function bindGridEvents() {
+      document.querySelectorAll("[data-accept]").forEach((btn) => {
+        btn.addEventListener("click", () => acceptDetected(btn.dataset.accept));
+      });
+
+      document.querySelectorAll("[data-toggle-group]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const group = findRow(btn.dataset.toggleGroup);
+          if (group && group.isGroup) {
+            group.expanded = !group.expanded;
+            render();
+          }
+        });
+      });
+
+      document.querySelectorAll("input[data-field]").forEach((input) => {
+        input.addEventListener("change", () => {
+          const row = findRow(input.dataset.id);
+          if (!row) return;
+          const val = parseFloat(input.value);
+          if (Number.isNaN(val)) return;
+          pushUndo();
+          if (input.dataset.field === "msrp") {
+            row.msrp = val;
+            if (row.locked) row.wholesale = wholesaleForRow(row, val);
+          } else if (input.dataset.field === "wholesale") {
+            row.wholesale = val;
+          } else if (input.dataset.field === "margin" && !row.locked) {
+            row.wholesale = wholesaleFromMarginPct(row.msrp, val);
+          } else {
+            return;
+          }
+          dirty = true;
+          render();
+          updateSaveState();
+        });
+      });
+    }
+
+    document.getElementById("btn-apply-all").addEventListener("click", applyAllDetected);
+    document.getElementById("btn-apply-selected").addEventListener("click", applySelectedDetected);
+    document.getElementById("btn-decline-selected").addEventListener("click", declineSelectedAtRisk);
+    document.getElementById("btn-clear-selection").addEventListener("click", clearSelection);
+
+    document.querySelector(".grid-wrap").addEventListener("change", (e) => {
+      if (e.target.id === "toggle-all-locked") onToggleAllLocked(e);
+      if (e.target.id === "select-all") handleSelectAllChange(e.target.checked);
+      if (e.target.dataset.select) handleRowSelectChange(e.target.dataset.select, e.target.checked);
+    });
+
+    document.querySelectorAll(".filter-pills .pill").forEach((pill) => {
+      pill.addEventListener("click", () => {
+        activeFilter = pill.dataset.filter;
+        document.querySelectorAll(".filter-pills .pill").forEach((p) => {
+          p.classList.toggle("pill--active", p === pill);
+          p.setAttribute("aria-selected", p === pill ? "true" : "false");
+        });
+        render();
+      });
+    });
+
+    document.getElementById("btn-save").addEventListener("click", () => {
+      savedSnapshot = snapshot();
+      dirty = false;
+      updateSaveState();
+    });
+
+    document.querySelector(".toolbar-slot").addEventListener("click", (e) => {
+      const discardBtn = e.target.closest("[data-toolbar-discard]");
+      if (discardBtn && !discardBtn.disabled) {
+        if (savedSnapshot) {
+          rows = JSON.parse(savedSnapshot);
+        } else {
+          rows = initialRows();
+        }
+        dirty = false;
+        undoStack.length = 0;
+        redoStack.length = 0;
+        selectedIds.clear();
+        updateUndoRedo();
+        render();
+        updateSaveState();
+        return;
+      }
+
+      const undoBtn = e.target.closest("[data-toolbar-undo]");
+      if (undoBtn && !undoBtn.disabled) {
+        if (!undoStack.length) return;
+        redoStack.push(snapshot());
+        restoreFromSnapshot(undoStack.pop());
+        return;
+      }
+
+      const redoBtn = e.target.closest("[data-toolbar-redo]");
+      if (redoBtn && !redoBtn.disabled) {
+        if (!redoStack.length) return;
+        undoStack.push(snapshot());
+        restoreFromSnapshot(redoStack.pop());
+      }
+    });
+
+    document.getElementById("proto-layout-variant").addEventListener("change", (e) => {
+      applyLayoutVariant(e.target.value);
+    });
+
+    document.getElementById("proto-arrow-tour").addEventListener("change", (e) => {
+      if (e.target.checked) arrowTourDismissed = false;
+      setArrowTourEnabled(e.target.checked);
+    });
+
+    document.getElementById("arrow-tour-close").addEventListener("click", () => {
+      arrowTourDismissed = true;
+      updateArrowTour();
+    });
+
+    document.querySelector(".grid-wrap").addEventListener("scroll", positionArrowTour);
+    window.addEventListener("resize", positionArrowTour);
+
+    window.addEventListener("popstate", () => {
+      const fromUrl = layoutVariantFromUrl();
+      if (fromUrl && fromUrl !== layoutVariant) applyLayoutVariant(fromUrl);
+    });
+
+    syncArrowTourToggle();
+    applyLayoutVariant(initialLayoutVariant());
+    savedSnapshot = snapshot();
+    updateSaveState();
+    updateUndoRedo();
+  </script>
+</body>
+</html>
