@@ -1175,7 +1175,15 @@
       overflow: visible;
     }
 
+    .detected-cell-inner:has(.btn-apply-arrow[data-tooltip]) {
+      overflow: visible;
+    }
+
     .grid td.col-detected:has(.btn-accept[data-tooltip]) {
+      overflow: visible;
+    }
+
+    .grid td.col-detected:has(.btn-apply-arrow[data-tooltip]) {
       overflow: visible;
     }
 
@@ -1580,6 +1588,10 @@
     .layout-8 .grid thead th.col-msrp-combined:has(.col-updated-msrp-header:hover),
     .layout-8 .grid thead th.col-msrp-combined:has(.col-updated-msrp-header:focus-visible) {
       z-index: 12;
+    }
+
+    .layout-4-2 .detected-cell-inner {
+      padding: 0 8px 0 2px;
     }
 
     .btn-apply-arrow {
@@ -2084,6 +2096,8 @@
       { value: "layout-2-1", label: "2.1 — Separate, light blue → white backgrounds, check on detected" },
       { value: "layout-3", label: "3 — Separate, green corner, check on detected" },
       { value: "layout-4", label: "4 — Separate, green corner, arrow between columns" },
+      { value: "layout-4-1", label: "4.1 — Separate, light blue detected, arrow between columns" },
+      { value: "layout-4-2", label: "4.2 — Separate, light blue detected with inline arrow" },
       { value: "layout-5", label: "5 — Combined MSRP → detected column" },
       { value: "layout-5-1", label: "5.1 — Combined, verified badge on accept" },
       { value: "layout-6", label: "6 — Separate, green corner, check on current MSRP" },
@@ -2181,6 +2195,8 @@
         "layout-2-1",
         "layout-3",
         "layout-4",
+        "layout-4-1",
+        "layout-4-2",
         "layout-5",
         "layout-5-1",
         "layout-8",
@@ -2202,6 +2218,10 @@
         document.body.classList.add("layout-3");
       } else if (variant === "layout-4") {
         document.body.classList.add("layout-4");
+      } else if (variant === "layout-4-1") {
+        document.body.classList.add("layout-4-1", "detected-variant-blue");
+      } else if (variant === "layout-4-2") {
+        document.body.classList.add("layout-4-2", "detected-variant-blue");
       } else if (variant === "layout-5") {
         document.body.classList.add("layout-5");
       } else if (variant === "layout-5-1") {
@@ -2289,10 +2309,17 @@
           <th class="col-price">Wholesale: USD</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
-      } else if (layoutVariant === "layout-4") {
+      } else if (layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
         thead.innerHTML = `<tr>${commonStart}
           <th class="col-price">Detected retail: USD</th>
           <th class="col-price-bridge" aria-hidden="true"></th>
+          <th class="col-price">MSRP: USD</th>
+          <th class="col-price">Wholesale: USD</th>
+          <th class="col-margin">${marginHeader}</th>
+        </tr>`;
+      } else if (layoutVariant === "layout-4-2") {
+        thead.innerHTML = `<tr>${commonStart}
+          <th class="col-price">Detected retail: USD</th>
           <th class="col-price">MSRP: USD</th>
           <th class="col-price">Wholesale: USD</th>
           <th class="col-margin">${marginHeader}</th>
@@ -2736,8 +2763,36 @@
       </div>`;
     }
 
+    function detectedCellHtmlLayout42(row) {
+      const resolved = isResolved(row);
+      const stateClass = resolved ? "detected-cell-inner--resolved" : "detected-cell-inner--mismatch";
+
+      if (resolved) {
+        return `<div class="detected-cell-inner ${stateClass}">
+          <span class="detected-value">$${formatMoney(row.detected)}</span>
+        </div>`;
+      }
+
+      return `<div class="detected-cell-inner ${stateClass}">
+        <span class="detected-value">$${formatMoney(row.detected)}</span>
+        <button type="button" class="btn-accept-combined btn-apply-arrow" data-accept="${row.id}" data-tooltip="Apply detected retail price as MSRP" aria-label="Apply detected retail price as MSRP for ${row.name}">
+          ${arrowRightIconSvg()}
+        </button>
+      </div>`;
+    }
+
     function detectedCellClass(row) {
       if (layoutVariant === "layout-4") return "col-detected";
+      if (layoutVariant === "layout-4-2") {
+        return isResolved(row)
+          ? "col-detected col-detected--resolved"
+          : "col-detected col-detected--mismatch";
+      }
+      if (layoutVariant === "layout-4-1") {
+        return isResolved(row)
+          ? "col-detected col-detected--resolved"
+          : "col-detected col-detected--mismatch";
+      }
       return isResolved(row) ? "col-detected col-detected--resolved" : "col-detected col-detected--mismatch";
     }
 
@@ -2856,8 +2911,11 @@
         if (layoutVariant === "layout-5" || layoutVariant === "layout-5-1" || layoutVariant === "layout-8") {
           return `<td class="col-msrp-combined"></td><td></td>`;
         }
-        if (layoutVariant === "layout-6" || layoutVariant === "layout-7" || layoutVariant === "layout-4") {
-          if (layoutVariant === "layout-4") {
+        if (layoutVariant === "layout-4-2") {
+          return `<td class="col-detected"></td><td></td>`;
+        }
+        if (layoutVariant === "layout-6" || layoutVariant === "layout-7" || layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
+          if (layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
             return `<td class="col-detected"></td><td class="col-price-bridge"></td><td></td>`;
           }
           return `<td class="col-detected"></td><td></td>`;
@@ -2887,7 +2945,12 @@
           <td>${msrpCellHtml(row)}</td>`;
       }
 
-      if (layoutVariant === "layout-4") {
+      if (layoutVariant === "layout-4-2") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellHtmlLayout42(row)}</td>
+          <td class="col-price">${msrpCellHtmlLayout4(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
         return `<td class="${detectedCellClass(row)}">${detectedCellDisplayHtml(row, false)}</td>
           <td class="col-price-bridge">${applyBridgeCellHtml(row)}</td>
           <td class="col-price">${msrpCellHtmlLayout4(row)}</td>`;
@@ -3089,7 +3152,7 @@
       const target = document.querySelector(".btn-apply-arrow");
       if (!tour || tour.hidden) return;
 
-      if (!target || layoutVariant !== "layout-4") {
+      if (!target || !isLayout4ArrowVariant()) {
         tour.hidden = true;
         return;
       }
@@ -3111,6 +3174,10 @@
       );
     }
 
+    function isLayout4ArrowVariant() {
+      return layoutVariant === "layout-4" || layoutVariant === "layout-4-1" || layoutVariant === "layout-4-2";
+    }
+
     function updateArrowTour() {
       const tour = document.getElementById("arrow-tour");
       if (!tour) return;
@@ -3118,7 +3185,7 @@
       const shouldShow =
         isArrowTourEnabled() &&
         !arrowTourDismissed &&
-        layoutVariant === "layout-4" &&
+        isLayout4ArrowVariant() &&
         document.querySelector(".btn-apply-arrow");
 
       if (!shouldShow) {
