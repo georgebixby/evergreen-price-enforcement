@@ -24,19 +24,28 @@
       --success: #2e7d32;
       --success-bg: #e8f5e9;
       --detected-bg: #f3faf4;
-      --detected-bg-blue: #e8f0fe;
+      --detected-bg-blue: #e2e7f0;
+      --row-selected-bg: #e8f4fe;
+      --row-selected-bg-hover: #e0eefc;
       --detected-mismatch-bg: #fdf3f3;
       --warn-corner: #c62828;
       --success-corner: #2e7d32;
       --at-risk: #c45c00;
+      --low-margin-warn: #c9a227;
+      --margin-highlight-bg: #f6efdb;
+      --msrp-warn-tooltip-bg: #fdeaea;
+      --msrp-warn-tooltip-border: #e07a7a;
+      --msrp-at-risk-tooltip-bg: #f6efdb;
+      --msrp-at-risk-tooltip-border: #c9a227;
       --grid-line: #e8e8e8;
       --grid-header-text: #8a8a8a;
       --grid-row-height: 32px;
       --cell-focus-blue: #0b7cda;
       --freeze-check: 32px;
       --freeze-status: 32px;
+      --freeze-image: 40px;
       --freeze-product: 248px;
-      --freeze-edge: calc(var(--freeze-check) + var(--freeze-status) + var(--freeze-product));
+      --freeze-edge: calc(var(--freeze-check) + var(--freeze-status) + var(--freeze-image) + var(--freeze-product));
       --freeze-shadow: 6px 0 10px -4px rgba(0, 0, 0, 0.14);
     }
 
@@ -414,7 +423,7 @@
     }
 
     .toolbar-selection-clear,
-    .toolbar-selection-decline {
+    .toolbar-decline-btn {
       border: none;
       background: none;
       padding: 0;
@@ -429,8 +438,12 @@
     }
 
     .toolbar-selection-clear:hover,
-    .toolbar-selection-decline:hover {
+    .toolbar-decline-btn:hover {
       color: #1a1a1a;
+    }
+
+    .toolbar-decline-btn[hidden] {
+      display: none !important;
     }
 
     .toolbar-selection-decline[hidden] {
@@ -510,6 +523,12 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+    }
+
+    .toolbar-apply-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
 
     .toolbar-left .filter-pills {
@@ -719,6 +738,76 @@
       text-align: left;
       white-space: nowrap;
       vertical-align: middle;
+      overflow: visible;
+    }
+
+    .grid thead th.col-price,
+    .grid thead th.col-margin,
+    .grid thead th.col-msrp-combined,
+    .grid thead th.col-variants {
+      overflow: visible;
+    }
+
+    .grid thead th:has(.col-header-tooltip:hover),
+    .grid thead th:has(.col-header-tooltip:focus-visible) {
+      z-index: 12;
+    }
+
+    .col-header-tooltip {
+      position: relative;
+      display: inline-block;
+      cursor: default;
+      outline: none;
+      text-decoration: underline dotted currentColor;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+    }
+
+    .col-header-tooltip__panel {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      z-index: 50;
+      box-sizing: border-box;
+      width: 304px;
+      max-width: min(304px, calc(100vw - 32px));
+      padding: 10px 12px;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      white-space: normal;
+      text-align: left;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .col-header-tooltip__panel::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: 20px;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 6px solid #333;
+    }
+
+    .col-header-tooltip__panel p {
+      margin: 0;
+    }
+
+    .col-header-tooltip__panel p + p {
+      margin-top: 8px;
+    }
+
+    .col-header-tooltip:hover .col-header-tooltip__panel,
+    .col-header-tooltip:focus-visible .col-header-tooltip__panel {
+      opacity: 1;
+      visibility: visible;
     }
 
     .grid thead th.col-freeze {
@@ -733,13 +822,13 @@
       z-index: 6;
     }
 
-    .grid-wrap.is-frozen-scrolled thead th.col-freeze-3,
-    .grid-wrap.is-frozen-scrolled td.col-freeze-3 {
+    .grid-wrap.is-frozen-scrolled thead th.col-product-header,
+    .grid-wrap.is-frozen-scrolled td.col-freeze-4 {
       box-shadow: var(--freeze-shadow);
     }
 
-    .grid-wrap.is-frozen-scrolled thead th.col-freeze-3::after,
-    .grid-wrap.is-frozen-scrolled td.col-freeze-3::after {
+    .grid-wrap.is-frozen-scrolled thead th.col-product-header::after,
+    .grid-wrap.is-frozen-scrolled td.col-freeze-4::after {
       content: "";
       position: absolute;
       top: 0;
@@ -767,10 +856,10 @@
       padding: 0;
     }
 
-    .grid thead th.col-product {
-      width: var(--freeze-product);
-      min-width: var(--freeze-product);
-      max-width: var(--freeze-product);
+    .grid thead th.col-product-header {
+      width: calc(var(--freeze-image) + var(--freeze-product));
+      min-width: calc(var(--freeze-image) + var(--freeze-product));
+      max-width: calc(var(--freeze-image) + var(--freeze-product));
     }
 
     .grid thead th.col-variants { width: 56px; min-width: 56px; }
@@ -808,10 +897,15 @@
       z-index: 3;
     }
 
-    .grid tbody tr.row-selected td { background-color: #e8f0fe; }
-    .grid tbody tr.row-selected:hover td { background-color: #e3ecfa; }
-    .grid tbody tr.row-selected td.col-freeze { background-color: #e8f0fe; }
-    .grid tbody tr.row-selected:hover td.col-freeze { background-color: #e3ecfa; }
+    .grid td.col-freeze-4 {
+      left: calc(var(--freeze-check) + var(--freeze-status) + var(--freeze-image));
+      z-index: 4;
+    }
+
+    .grid tbody tr.row-selected td { background-color: var(--row-selected-bg); }
+    .grid tbody tr.row-selected:hover td { background-color: var(--row-selected-bg-hover); }
+    .grid tbody tr.row-selected td.col-freeze { background-color: var(--row-selected-bg); }
+    .grid tbody tr.row-selected:hover td.col-freeze { background-color: var(--row-selected-bg-hover); }
 
     .grid td.col-check {
       text-align: center;
@@ -820,13 +914,32 @@
 
     .grid td.col-status { text-align: center; }
 
+    .grid td.col-image {
+      width: var(--freeze-image);
+      min-width: var(--freeze-image);
+      max-width: var(--freeze-image);
+      padding: 0 4px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .col-image-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: var(--grid-row-height);
+    }
+
     .grid td.col-product {
+      width: var(--freeze-product);
+      min-width: var(--freeze-product);
+      max-width: var(--freeze-product);
       padding: 0 8px;
       overflow: visible;
     }
 
-    .grid td.col-freeze-3,
-    .grid thead th.col-freeze-3 {
+    .grid td.col-freeze-4,
+    .grid thead th.col-freeze-4 {
       overflow: visible;
     }
 
@@ -842,6 +955,14 @@
       padding: 0;
     }
 
+    body.scenario-low-margins .grid td.col-margin {
+      background: var(--margin-highlight-bg);
+    }
+
+    body.scenario-low-margins .grid tbody tr.row-selected td.col-margin {
+      background: #efe6cf;
+    }
+
     .grid td.col-detected--mismatch { background: var(--detected-mismatch-bg); }
     .grid td.col-detected--resolved { background: var(--detected-bg); }
 
@@ -853,7 +974,7 @@
 
     body.detected-variant-blue .grid td.col-detected--mismatch { background: var(--detected-bg-blue); }
     body.detected-variant-blue .grid td.col-detected--resolved { background: #fff; }
-    body.detected-variant-blue .grid tbody tr.row-selected td.col-detected--mismatch { background: #d4e3fc; }
+    body.detected-variant-blue .grid tbody tr.row-selected td.col-detected--mismatch { background: #d8dde8; }
     body.detected-variant-blue .grid tbody tr.row-selected td.col-detected--resolved { background: var(--detected-bg-blue); }
 
     /* layout-3 / layout-7: detected retail — white field with green corner marker */
@@ -896,7 +1017,6 @@
     .product-cell {
       display: flex;
       align-items: center;
-      gap: 8px;
       min-width: 0;
       height: var(--grid-row-height);
     }
@@ -922,22 +1042,8 @@
 
     .product-name--variant {
       color: var(--subdued);
-      padding-left: 32px;
+      padding-left: 16px;
     }
-
-    .group-toggle {
-      border: none;
-      background: none;
-      padding: 0;
-      margin-right: 2px;
-      cursor: pointer;
-      color: var(--subdued);
-      display: inline-flex;
-      vertical-align: middle;
-    }
-
-    .group-toggle svg { transition: transform 0.15s; }
-    .group-toggle.collapsed svg { transform: rotate(-90deg); }
 
   /* status icons */
     .status-icon {
@@ -947,6 +1053,7 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      position: relative;
     }
 
     .status-icon svg {
@@ -959,8 +1066,64 @@
       color: var(--error-dark);
     }
 
+    .status-icon--has-tooltip {
+      cursor: default;
+      outline: none;
+    }
+
+    .status-icon__tooltip {
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      box-sizing: border-box;
+      width: max-content;
+      max-width: 280px;
+      padding: 10px 12px;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      white-space: normal;
+      text-align: left;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .status-icon__tooltip::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-right: 6px solid #333;
+    }
+
+    .status-icon--has-tooltip:hover .status-icon__tooltip,
+    .status-icon--has-tooltip:focus-visible .status-icon__tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .grid td.col-status:has(.status-icon--has-tooltip:hover),
+    .grid td.col-status:has(.status-icon--has-tooltip:focus-visible) {
+      overflow: visible;
+      z-index: 12;
+    }
+
     .status-icon--at-risk {
       color: var(--at-risk);
+    }
+
+    .status-icon--low-margin {
+      color: var(--low-margin-warn);
     }
 
     .status-icon--success {
@@ -1028,6 +1191,95 @@
     .price-field:focus-within.price-field--mismatch::before {
       top: 2px;
       right: 2px;
+    }
+
+    .price-field--at-risk::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 7px 7px 0;
+      border-color: transparent var(--at-risk) transparent transparent;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .price-field:focus-within.price-field--at-risk::before {
+      top: 2px;
+      right: 2px;
+    }
+
+    .price-field--low-margin::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 7px 7px 0;
+      border-color: transparent var(--low-margin-warn) transparent transparent;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .price-field:focus-within.price-field--low-margin::before {
+      top: 2px;
+      right: 2px;
+    }
+
+    .price-field__warn-tooltip {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 6px);
+      z-index: 50;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 400;
+      color: var(--text);
+      white-space: nowrap;
+      border-radius: var(--radius);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .price-field__warn-tooltip--mismatch {
+      background: var(--msrp-warn-tooltip-bg);
+      border: 1px solid var(--msrp-warn-tooltip-border);
+    }
+
+    .price-field__warn-tooltip--at-risk {
+      background: var(--msrp-at-risk-tooltip-bg);
+      border: 1px solid var(--msrp-at-risk-tooltip-border);
+    }
+
+    .price-field__warn-tooltip--low-margin {
+      background: var(--msrp-at-risk-tooltip-bg);
+      border: 1px solid var(--msrp-at-risk-tooltip-border);
+    }
+
+    .price-field--mismatch:focus-within .price-field__warn-tooltip,
+    .price-field--at-risk:focus-within .price-field__warn-tooltip,
+    .price-field--low-margin:focus-within .price-field__warn-tooltip,
+    .msrp-combined--mismatch:focus-within .price-field__warn-tooltip,
+    .msrp-combined--at-risk:focus-within .price-field__warn-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .grid td:has(.price-field--mismatch:focus-within),
+    .grid td:has(.price-field--at-risk:focus-within),
+    .grid td:has(.price-field--low-margin:focus-within),
+    .grid td:has(.msrp-combined--mismatch:focus-within),
+    .grid td:has(.msrp-combined--at-risk:focus-within) {
+      overflow: visible;
+      z-index: 11;
     }
 
     .price-field--resolved::before { display: none; }
@@ -1259,6 +1511,30 @@
       flex-shrink: 0;
     }
 
+    .group-placeholder-field {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      height: 100%;
+      min-height: var(--grid-row-height);
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    .group-placeholder-field__dash {
+      color: var(--subdued);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .group-placeholder-margin .group-placeholder-field__dash {
+      flex: 1;
+      min-width: 0;
+      text-align: right;
+      padding: 0 2px;
+    }
+
     .price-field--with-action input {
       flex: 1;
       min-width: 0;
@@ -1325,6 +1601,20 @@
       z-index: 1;
     }
 
+    .msrp-combined--at-risk::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 7px 7px 0;
+      border-color: transparent var(--low-margin-warn) transparent transparent;
+      pointer-events: none;
+      z-index: 1;
+    }
+
     .msrp-combined:focus-within {
       outline: 2px solid var(--cell-focus-blue);
       outline-offset: -2px;
@@ -1345,7 +1635,8 @@
       z-index: 3;
     }
 
-    .msrp-combined:focus-within.msrp-combined--mismatch::before {
+    .msrp-combined:focus-within.msrp-combined--mismatch::before,
+    .msrp-combined:focus-within.msrp-combined--at-risk::before {
       top: 2px;
       right: 2px;
     }
@@ -1530,67 +1821,8 @@
       text-align: left;
     }
 
-    .layout-8 .grid thead th.col-msrp-combined {
-      overflow: visible;
-    }
-
-    .layout-8 .grid thead {
-      overflow: visible;
-    }
-
-    .layout-8 .col-updated-msrp-header {
-      position: relative;
-      display: inline-block;
-      cursor: default;
-      outline: none;
-      text-decoration: underline dotted currentColor;
-      text-underline-offset: 3px;
-      text-decoration-thickness: 1px;
-    }
-
-    .layout-8 .col-updated-msrp-header__tooltip {
-      position: absolute;
-      left: 0;
-      top: calc(100% + 8px);
-      z-index: 50;
-      box-sizing: border-box;
-      width: 304px;
-      max-width: 304px;
-      padding: 10px 12px;
-      background: #333;
-      color: #fff;
-      font-size: 12px;
-      line-height: 16px;
-      font-weight: 400;
-      white-space: normal;
-      text-align: left;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    .layout-8 .col-updated-msrp-header__tooltip p {
-      margin: 0;
-    }
-
-    .layout-8 .col-updated-msrp-header__tooltip p + p {
-      margin-top: 8px;
-    }
-
-    .layout-8 .col-updated-msrp-header:hover .col-updated-msrp-header__tooltip,
-    .layout-8 .col-updated-msrp-header:focus-visible .col-updated-msrp-header__tooltip {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .layout-8 .grid thead th.col-msrp-combined:has(.col-updated-msrp-header:hover),
-    .layout-8 .grid thead th.col-msrp-combined:has(.col-updated-msrp-header:focus-visible) {
-      z-index: 12;
-    }
-
-    .layout-4-2 .detected-cell-inner {
+    .layout-4-2 .detected-cell-inner,
+    .layout-final .detected-cell-inner {
       padding: 0 8px 0 2px;
     }
 
@@ -1979,7 +2211,7 @@
             </div>
             <div class="toolbar-selection-apply-group">
               <button type="button" class="btn-apply-selected" id="btn-apply-selected" disabled>Apply detected prices</button>
-              <button type="button" class="toolbar-selection-decline" id="btn-decline-selected" hidden>Decline price updates</button>
+              <button type="button" class="toolbar-decline-btn toolbar-selection-decline" id="btn-decline-selected" hidden>Decline price updates</button>
             </div>
           </div>
           <div class="toolbar-selection-actions">
@@ -1999,14 +2231,17 @@
 
         <div class="toolbar toolbar--default" id="toolbar-default">
           <div class="toolbar-left">
-            <button class="btn-apply-all" type="button" id="btn-apply-all">
-              Apply all detected prices
-            </button>
+            <div class="toolbar-apply-group">
+              <button class="btn-apply-all" type="button" id="btn-apply-all">
+                Apply all detected prices
+              </button>
+              <button type="button" class="toolbar-decline-btn" id="btn-decline-all" hidden>Decline price updates</button>
+            </div>
             <div class="filter-pills" role="tablist" aria-label="Filter products">
               <button class="pill pill--active" type="button" data-filter="all" role="tab" aria-selected="true">
                 All <span class="pill-count" id="count-all"></span>
               </button>
-              <button class="pill" type="button" data-filter="required" role="tab" aria-selected="false">
+              <button class="pill" type="button" data-filter="required" role="tab" aria-selected="false" id="pill-required">
                 Required <span class="pill-count" id="count-required"></span>
               </button>
               <button class="pill hidden" type="button" data-filter="at-risk" role="tab" aria-selected="false" id="pill-at-risk">
@@ -2046,9 +2281,10 @@
   <details class="proto-panel">
     <summary>Prototype controls</summary>
     <div class="proto-panel__body">
+      <label class="proto-label" for="proto-scenario">Scenario</label>
+      <select class="proto-select" id="proto-scenario" aria-label="Data scenario"></select>
       <label class="proto-label" for="proto-layout-variant">Layout variant</label>
       <select class="proto-select" id="proto-layout-variant" aria-label="Layout variant"></select>
-      <p class="proto-note">Required and At risk are separate filters. Declining at-risk rows moves them to Resolved.</p>
       <div class="proto-switch-row">
         <span>Arrow icon tour on load</span>
         <label class="switch" aria-label="Show arrow icon tour on page load">
@@ -2088,7 +2324,14 @@
   <script>
     const THUMB_COLORS = ["#e8d5c4", "#d4e8d4", "#d4d8e8", "#e8d4d4", "#e8e4d4", "#d4e8e8"];
     const LAYOUT_VARIANT_KEY = "evergreen-price-enforcement-layout-variant";
+    const SCENARIO_KEY = "evergreen-price-enforcement-scenario";
     const ARROW_TOUR_KEY = "evergreen-price-enforcement-arrow-tour";
+    const SCENARIO_OPTIONS = [
+      { value: "egregious-only", label: "Egregious only" },
+      { value: "non-egregious-only", label: "Non-egregious only" },
+      { value: "mixed", label: "Mixed egregious + non-egregious" },
+      { value: "low-margins", label: "Low margins" },
+    ];
     const LAYOUT_VARIANT_OPTIONS = [
       { value: "layout-1", label: "1 — Separate, red/green backgrounds, check on detected" },
       { value: "layout-1-1", label: "1.1 — Separate, verified badge on MSRP after accept" },
@@ -2103,14 +2346,107 @@
       { value: "layout-6", label: "6 — Separate, green corner, check on current MSRP" },
       { value: "layout-7", label: "7 — Separate, green corner, apply in actions column" },
       { value: "layout-8", label: "8 — Combined, strikethrough old MSRP + updated value" },
+      { value: "layout-final", label: "Final" },
     ];
 
     const LAYOUT_VARIANTS = LAYOUT_VARIANT_OPTIONS.map((o) => o.value);
 
     function layoutVariantSortOrder(id) {
+      if (id === "layout-final") return 100;
       const match = id.match(/^layout-(\d+)(?:-(\d+))?$/);
       if (!match) return 999;
       return Number(match[1]) + (match[2] ? Number(match[2]) / 10 : 0);
+    }
+
+    function populateScenarioSelect() {
+      const select = document.getElementById("proto-scenario");
+      if (!select) return;
+      select.innerHTML = SCENARIO_OPTIONS.map(
+        (opt) => `<option value="${opt.value}">${opt.label}</option>`
+      ).join("");
+      select.value = prototypeScenario;
+    }
+
+    function initialPrototypeScenario() {
+      try {
+        const stored = localStorage.getItem(SCENARIO_KEY);
+        if (stored && SCENARIO_OPTIONS.some((opt) => opt.value === stored)) return stored;
+      } catch (_) { /* ignore */ }
+      return "mixed";
+    }
+
+    function syncScenarioBodyClass() {
+      document.body.classList.toggle("scenario-low-margins", prototypeScenario === "low-margins");
+    }
+
+    function applyIssueScenario(result, scenario) {
+      const leaves = [];
+      result.forEach((r) => {
+        if (r.isGroup) r.children.forEach((c) => leaves.push(c));
+        else leaves.push(r);
+      });
+
+      leaves.forEach((row) => {
+        delete row.issueCategory;
+        delete row.declinedAtRisk;
+        row.msrp = row.initialMsrp;
+        row.wholesale = row.initialWholesale;
+      });
+
+      if (scenario === "egregious-only") return;
+
+      if (scenario === "low-margins") {
+        leaves.forEach((row) => {
+          const msrp = Number(row.detected);
+          row.msrp = msrp;
+          row.initialMsrp = msrp;
+          row.issueCategory = "low-margin";
+          const marginPct = Math.floor(Math.random() * 45) + 5;
+          row.wholesale = wholesaleFromMarginPct(msrp, marginPct);
+          if (row.locked) row.lockedMarginPct = marginPct;
+        });
+        return;
+      }
+
+      const markAtRisk = (row) => {
+        row.issueCategory = "at-risk";
+        const detected = Number(row.detected);
+        row.msrp = detected + 1;
+        row.initialMsrp = row.msrp;
+      };
+
+      if (scenario === "non-egregious-only") {
+        leaves.forEach(markAtRisk);
+        return;
+      }
+
+      leaves.slice(-9).forEach(markAtRisk);
+    }
+
+    function applyPrototypeScenario(scenario) {
+      if (!SCENARIO_OPTIONS.some((opt) => opt.value === scenario)) return;
+      prototypeScenario = scenario;
+      try {
+        localStorage.setItem(SCENARIO_KEY, scenario);
+      } catch (_) { /* ignore quota / private mode */ }
+      syncScenarioBodyClass();
+      const scenarioSelect = document.getElementById("proto-scenario");
+      if (scenarioSelect) scenarioSelect.value = scenario;
+      rows = initialRows();
+      savedSnapshot = snapshot();
+      dirty = false;
+      undoStack.length = 0;
+      redoStack.length = 0;
+      selectedIds.clear();
+      activeFilter = "all";
+      document.querySelectorAll(".filter-pills .pill").forEach((p) => {
+        const isAll = p.dataset.filter === "all";
+        p.classList.toggle("pill--active", isAll);
+        p.setAttribute("aria-selected", isAll ? "true" : "false");
+      });
+      updateUndoRedo();
+      render();
+      updateSaveState();
     }
 
     function populateLayoutVariantSelect() {
@@ -2136,18 +2472,64 @@
       </svg>`;
     }
 
+    function colHeaderTooltipHtml(label, tooltipInnerHtml, ariaLabel = label) {
+      return `<span class="col-header-tooltip" tabindex="0" aria-label="${ariaLabel}">
+        ${label}
+        <span class="col-header-tooltip__panel" role="tooltip">${tooltipInnerHtml}</span>
+      </span>`;
+    }
+
+    function msrpHeaderHtml() {
+      return colHeaderTooltipHtml(
+        "MSRP: USD",
+        "<p>MSRP is the retail price you suggest retailers charge. It should match your direct-to-consumer price.</p>",
+        "MSRP: USD"
+      );
+    }
+
+    function wholesaleHeaderHtml() {
+      return colHeaderTooltipHtml(
+        "Wholesale: USD",
+        "<p>Your wholesale price must be the same or lower on Faire as on other places you sell your products.</p>",
+        "Wholesale: USD"
+      );
+    }
+
+    function detectedRetailHeaderHtml() {
+      return colHeaderTooltipHtml(
+        "Detected retail: USD",
+        "<p>We use publicly accessible prices on your website to find these retail prices, which should match your MSRPs on Faire.</p>",
+        "Detected retail: USD"
+      );
+    }
+
+    function variantsHeaderHtml() {
+      return colHeaderTooltipHtml(
+        "Variants",
+        "<p>Products in which all variants are the same price are grouped into a single row.</p>",
+        "Variants"
+      );
+    }
+
+    function marginLabelTooltipHtml() {
+      return colHeaderTooltipHtml(
+        "Margin",
+        "<p>Margin is calculated as the percent off difference between wholesale price and MSRP.</p>",
+        "Margin"
+      );
+    }
+
     function combinedMsrpHeaderHtml() {
       return `<span class="col-msrp-combined__label">Current MSRP ${arrowRightIconSvg()} Detected: USD</span>`;
     }
 
     function updatedMsrpHeaderHtml() {
-      return `<span class="col-updated-msrp-header" tabindex="0" aria-label="MSRP: USD">
-        MSRP: USD
-        <span class="col-updated-msrp-header__tooltip" role="tooltip">
-          <p>MSRP is the retail price you suggest retailers charge. It should match your direct-to-consumer price.</p>
-          <p>When your listed MSRP differs from detected retail, the suggested update is based on the publicly accessible price on your website.</p>
-        </span>
-      </span>`;
+      return colHeaderTooltipHtml(
+        "MSRP: USD",
+        `<p>MSRP is the retail price you suggest retailers charge. It should match your direct-to-consumer price.</p>
+          <p>When your listed MSRP differs from detected retail, the suggested update is based on the publicly accessible price on your website.</p>`,
+        "MSRP: USD"
+      );
     }
 
     function verifiedBadgeIconSvg() {
@@ -2170,7 +2552,7 @@
 
     function marginHeaderHtml() {
       return `<div class="col-margin-header">
-        <span>Margin</span>
+        ${marginLabelTooltipHtml()}
         ${lockedHeaderHtml()}
       </div>`;
     }
@@ -2200,6 +2582,7 @@
         "layout-5",
         "layout-5-1",
         "layout-8",
+        "layout-final",
         "layout-6",
         "layout-7",
         "detected-variant-red",
@@ -2222,6 +2605,8 @@
         document.body.classList.add("layout-4-1", "detected-variant-blue");
       } else if (variant === "layout-4-2") {
         document.body.classList.add("layout-4-2", "detected-variant-blue");
+      } else if (variant === "layout-final") {
+        document.body.classList.add("layout-final", "detected-variant-blue");
       } else if (variant === "layout-5") {
         document.body.classList.add("layout-5");
       } else if (variant === "layout-5-1") {
@@ -2287,56 +2672,56 @@
       const commonStart = `
         <th class="col-check col-freeze col-freeze-1"><input type="checkbox" id="select-all" aria-label="Select all" /></th>
         <th class="col-status col-freeze col-freeze-2" aria-label="Status"></th>
-        <th class="col-product col-freeze col-freeze-3">Product</th>
-        <th class="col-variants">Variants</th>`;
+        <th class="col-product col-freeze col-freeze-3 col-product-header" colspan="2">Product</th>
+        <th class="col-variants">${variantsHeaderHtml()}</th>`;
 
       if (layoutVariant === "layout-5" || layoutVariant === "layout-5-1") {
         thead.innerHTML = `<tr>${commonStart}
           <th class="col-price col-msrp-combined">${combinedMsrpHeaderHtml()}</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
       } else if (layoutVariant === "layout-8") {
         thead.innerHTML = `<tr>${commonStart}
           <th class="col-price col-msrp-combined">${updatedMsrpHeaderHtml()}</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
       } else if (layoutVariant === "layout-6") {
         thead.innerHTML = `<tr>${commonStart}
-          <th class="col-price">Detected retail: USD</th>
-          <th class="col-price">MSRP: USD</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${detectedRetailHeaderHtml()}</th>
+          <th class="col-price">${msrpHeaderHtml()}</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
       } else if (layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
         thead.innerHTML = `<tr>${commonStart}
-          <th class="col-price">Detected retail: USD</th>
+          <th class="col-price">${detectedRetailHeaderHtml()}</th>
           <th class="col-price-bridge" aria-hidden="true"></th>
-          <th class="col-price">MSRP: USD</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${msrpHeaderHtml()}</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
-      } else if (layoutVariant === "layout-4-2") {
+      } else if (layoutVariant === "layout-4-2" || layoutVariant === "layout-final") {
         thead.innerHTML = `<tr>${commonStart}
-          <th class="col-price">Detected retail: USD</th>
-          <th class="col-price">MSRP: USD</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${detectedRetailHeaderHtml()}</th>
+          <th class="col-price">${msrpHeaderHtml()}</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
       } else if (layoutVariant === "layout-7") {
         thead.innerHTML = `<tr>${commonStart}
-          <th class="col-price">Detected retail: USD</th>
-          <th class="col-price">MSRP: USD</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${detectedRetailHeaderHtml()}</th>
+          <th class="col-price">${msrpHeaderHtml()}</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
           <th class="col-actions">Actions</th>
         </tr>`;
       } else {
         thead.innerHTML = `<tr>${commonStart}
-          <th class="col-price">Detected retail: USD</th>
-          <th class="col-price">MSRP: USD</th>
-          <th class="col-price">Wholesale: USD</th>
+          <th class="col-price">${detectedRetailHeaderHtml()}</th>
+          <th class="col-price">${msrpHeaderHtml()}</th>
+          <th class="col-price">${wholesaleHeaderHtml()}</th>
           <th class="col-margin">${marginHeader}</th>
         </tr>`;
       }
@@ -2407,13 +2792,19 @@
               ...c,
               thumb: makeThumb(seed++),
               initialMsrp: c.msrp,
+              initialWholesale: c.wholesale,
               isVariant: true,
               parentId: item.id,
             })),
           };
           return group;
         }
-        return { ...item, thumb: makeThumb(seed++), initialMsrp: item.msrp };
+        return {
+          ...item,
+          thumb: makeThumb(seed++),
+          initialMsrp: item.msrp,
+          initialWholesale: item.wholesale,
+        };
       });
 
       result.forEach((r) => {
@@ -2421,21 +2812,12 @@
         else setRowLocked(r, true);
       });
 
-      const leaves = [];
-      result.forEach((r) => {
-        if (r.isGroup) r.children.forEach((c) => leaves.push(c));
-        else leaves.push(r);
-      });
-      leaves.slice(-9).forEach((row) => {
-        row.issueCategory = "at-risk";
-        const detected = Number(row.detected);
-        row.msrp = detected + 1;
-        row.initialMsrp = row.msrp;
-      });
+      applyIssueScenario(result, prototypeScenario);
 
       return result;
     }
 
+    let prototypeScenario = initialPrototypeScenario();
     let rows = initialRows();
     let savedSnapshot = null;
     let activeFilter = "all";
@@ -2450,7 +2832,7 @@
       items.forEach((r) => {
         if (r.isGroup) {
           out.push(r);
-          if (r.expanded) r.children.forEach((c) => out.push(c));
+          r.children.forEach((c) => out.push(c));
         } else {
           out.push(r);
         }
@@ -2521,6 +2903,10 @@
       </div>`;
     }
 
+    function isLowMargin(row) {
+      return row.issueCategory === "low-margin";
+    }
+
     function isDeclined(row) {
       return row.declinedAtRisk === true;
     }
@@ -2529,11 +2915,17 @@
       return Number(row.msrp) === Number(row.detected);
     }
 
-    function isAtRisk(row) {
+    function isPriceAtRisk(row) {
       return isRequired(row) && row.issueCategory === "at-risk";
     }
 
+    function isAtRisk(row) {
+      if (isLowMargin(row)) return !isDeclined(row);
+      return isPriceAtRisk(row);
+    }
+
     function isEgregiousRequired(row) {
+      if (isLowMargin(row)) return false;
       return isRequired(row) && row.issueCategory !== "at-risk";
     }
 
@@ -2582,17 +2974,22 @@
       document.getElementById("count-required").textContent = c.required;
       document.getElementById("count-at-risk").textContent = c.atRisk;
 
+      const pillRequired = document.getElementById("pill-required");
+      pillRequired.classList.toggle("hidden", c.required === 0);
+
       const pillAtRisk = document.getElementById("pill-at-risk");
       pillAtRisk.classList.toggle("hidden", c.atRisk === 0);
 
       const pillResolved = document.getElementById("pill-resolved");
       pillResolved.classList.toggle("hidden", c.handled === 0);
 
-      document.getElementById("page-desc").innerHTML =
-        `<strong>Required: Update ${c.unresolved} product${c.unresolved === 1 ? "" : "s"} by August 18 to avoid having them ranked lower.</strong> Apply detected retail prices as your MSRP, or if you believe there is an error, <button type="button" class="page-desc__link">submit an appeal</button>.`;
+      updatePageDesc(c);
 
       const btnApplyAll = document.getElementById("btn-apply-all");
       btnApplyAll.disabled = c.unresolved === 0;
+
+      const btnDeclineAll = document.getElementById("btn-decline-all");
+      if (btnDeclineAll) btnDeclineAll.hidden = !hasOnlyNonEgregiousIssues();
     }
 
     function setToolbarBtnsDisabled(selector, disabled) {
@@ -2608,6 +3005,33 @@
 
     function visibleLeafRows() {
       return allLeafRows().filter(rowVisible);
+    }
+
+    function hasOnlyNonEgregiousIssues() {
+      const c = counts();
+      return c.required === 0 && c.atRisk > 0;
+    }
+
+    function hasOnlyNonEgregiousPriceIssues() {
+      const leaves = allLeafRows();
+      const required = leaves.filter(isEgregiousRequired).length;
+      const priceAtRisk = leaves.filter(isPriceAtRisk).length;
+      return required === 0 && priceAtRisk > 0;
+    }
+
+    function updatePageDesc(c) {
+      const pageDesc = document.getElementById("page-desc");
+      if (hasOnlyNonEgregiousPriceIssues()) {
+        const priceAtRisk = allLeafRows().filter(isPriceAtRisk).length;
+        pageDesc.className = "page-desc";
+        pageDesc.innerHTML =
+          `<strong>${priceAtRisk} product${priceAtRisk === 1 ? "" : "s"} are likely losing reach because Faire MSRPs are above retail prices.</strong> Apply the detected retail prices as your MSRPs to stop hurting your conversion.`;
+        return;
+      }
+
+      pageDesc.className = "page-desc";
+      pageDesc.innerHTML =
+        `<strong>Required: Update ${c.required} product${c.required === 1 ? "" : "s"} by August 18 to avoid having them ranked lower.</strong> Apply detected retail prices as your MSRP, or if you believe there is an error, <button type="button" class="page-desc__link">submit an appeal</button>.`;
     }
 
     function selectionIsOnlyAtRisk() {
@@ -2698,17 +3122,27 @@
 
     function statusIconHtml(row) {
       if (isResolved(row) || isDeclined(row)) return "";
-      if (isAtRisk(row)) {
-        return `<span class="status-icon status-icon--at-risk" aria-label="At risk">
+      if (isLowMargin(row)) {
+        return `<span class="status-icon status-icon--low-margin status-icon--has-tooltip" tabindex="0" aria-label="Low margin">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path d="M12 9v3.75m0 3.75h.008M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+          <span class="status-icon__tooltip" role="tooltip">Update MSRP to match the detected retail price.</span>
         </span>`;
       }
-      return `<span class="status-icon status-icon--error" aria-label="Required change">
+      if (isPriceAtRisk(row)) {
+        return `<span class="status-icon status-icon--at-risk status-icon--has-tooltip" tabindex="0" aria-label="At risk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M12 9v3.75m0 3.75h.008M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="status-icon__tooltip" role="tooltip">Update MSRP to match the detected retail price.</span>
+        </span>`;
+      }
+      return `<span class="status-icon status-icon--error status-icon--has-tooltip" tabindex="0" aria-label="Required change">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
           <path d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
+        <span class="status-icon__tooltip" role="tooltip">Update MSRP to match the detected retail price to avoid having this product ranked lower.</span>
       </span>`;
     }
 
@@ -2734,7 +3168,7 @@
 
       return `<div class="detected-cell-inner ${stateClass} detected-cell-inner--green-corner">
         <span class="detected-value">$${formatMoney(row.detected)}</span>
-        <button type="button" class="btn-accept" data-accept="${row.id}" data-tooltip="Update MSRP to use detected price" aria-label="Update MSRP to use detected price for ${row.name}">
+        <button type="button" class="btn-accept" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
           ${checkSvg}
         </button>
       </div>`;
@@ -2757,7 +3191,7 @@
 
       return `<div class="detected-cell-inner detected-cell-inner--mismatch">
         <span class="detected-value">$${formatMoney(row.detected)}</span>
-        <button type="button" class="btn-accept" data-accept="${row.id}" aria-label="Apply detected price to MSRP for ${row.name}">
+        <button type="button" class="btn-accept" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
           ${checkSvg}
         </button>
       </div>`;
@@ -2781,9 +3215,36 @@
       </div>`;
     }
 
+    function detectedCellHtmlLayoutFinal(row) {
+      const resolved = isResolved(row);
+      const stateClass = resolved ? "detected-cell-inner--resolved" : "detected-cell-inner--mismatch";
+      const checkSvg = checkIconSvg();
+
+      if (resolved) {
+        return `<div class="detected-cell-inner ${stateClass}">
+          <span class="detected-value">$${formatMoney(row.detected)}</span>
+        </div>`;
+      }
+
+      return `<div class="detected-cell-inner ${stateClass}">
+        <span class="detected-value">$${formatMoney(row.detected)}</span>
+        <button type="button" class="btn-accept" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
+          ${checkSvg}
+        </button>
+      </div>`;
+    }
+
+    function isInlineDetectedVariant() {
+      return layoutVariant === "layout-4-2" || layoutVariant === "layout-final";
+    }
+
+    function isInlineArrowDetectedVariant() {
+      return layoutVariant === "layout-4-2";
+    }
+
     function detectedCellClass(row) {
       if (layoutVariant === "layout-4") return "col-detected";
-      if (layoutVariant === "layout-4-2") {
+      if (isInlineDetectedVariant()) {
         return isResolved(row)
           ? "col-detected col-detected--resolved"
           : "col-detected col-detected--mismatch";
@@ -2805,24 +3266,55 @@
       </button></div>`;
     }
 
+    function wholesalePriceFieldClass(row) {
+      if (isLowMargin(row) && !isDeclined(row)) return "price-field--low-margin";
+      return "";
+    }
+
+    function msrpPriceFieldWarnType(row) {
+      if (isResolved(row) || isLowMargin(row)) return null;
+      if (isPriceAtRisk(row)) return "at-risk";
+      return "mismatch";
+    }
+
+    function msrpWarnTooltipHtml(row) {
+      const warnType = msrpPriceFieldWarnType(row);
+      if (!warnType) return "";
+      return `<span class="price-field__warn-tooltip price-field__warn-tooltip--${warnType}" role="tooltip">Update this MSRP to match the detected price.</span>`;
+    }
+
+    function combinedMsrpWarnClass(row) {
+      const warnType = msrpPriceFieldWarnType(row);
+      if (!warnType) return "";
+      return warnType === "at-risk" ? "msrp-combined--at-risk" : "msrp-combined--mismatch";
+    }
+
+    function msrpPriceFieldClass(row) {
+      if (isResolved(row) || isLowMargin(row)) return "price-field--resolved";
+      if (isPriceAtRisk(row)) return "price-field--at-risk";
+      return "price-field--mismatch";
+    }
+
     function currentMsrpCellHtmlLayout6(row) {
       const resolved = isResolved(row);
-      const mismatchClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      const mismatchClass = msrpPriceFieldClass(row);
       const actionClass = resolved ? "" : " price-field--with-action";
 
       if (resolved) {
         return `<div class="price-field ${mismatchClass}">
           <span class="cur">$</span>
           <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="Current MSRP for ${row.name}" />
+          ${msrpWarnTooltipHtml(row)}
         </div>`;
       }
 
       return `<div class="price-field ${mismatchClass}${actionClass}">
         <span class="cur">$</span>
         <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="Current MSRP for ${row.name}" />
-        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
           ${checkIconSvg()}
         </button>
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
     }
 
@@ -2850,15 +3342,16 @@
         </div>`;
       }
 
-      return `<div class="msrp-combined msrp-combined--mismatch">
+      return `<div class="msrp-combined ${combinedMsrpWarnClass(row)}">
         <div class="msrp-combined__values">
           <span class="msrp-combined__current">$${formatMoney(row.initialMsrp ?? row.msrp)}</span>
           <span class="msrp-combined__arrow" aria-hidden="true">${arrowRightIconSvg()}</span>
           ${combinedMsrpRightInputHtml(row, true)}
         </div>
-        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
           ${checkIconSvg()}
         </button>
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
     }
 
@@ -2871,14 +3364,15 @@
         </div>`;
       }
 
-      return `<div class="msrp-combined msrp-combined--mismatch">
+      return `<div class="msrp-combined ${combinedMsrpWarnClass(row)}">
         <div class="msrp-combined__values">
           <span class="msrp-combined__previous">$${formatMoney(row.initialMsrp ?? row.msrp)}</span>
           ${combinedMsrpRightInputHtml(row, false, "MSRP")}
         </div>
-        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
           ${checkIconSvg()}
         </button>
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
     }
 
@@ -2898,29 +3392,75 @@
         </div>`;
       }
 
-      return `<div class="msrp-combined msrp-combined--mismatch">
+      return `<div class="msrp-combined ${combinedMsrpWarnClass(row)}">
         <div class="msrp-combined__values">${valuesHtml}</div>
-        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Update to detected price" aria-label="Update to detected price for ${row.name}">
+        <button type="button" class="btn-accept-combined" data-accept="${row.id}" data-tooltip="Apply as MSRP" aria-label="Apply as MSRP for ${row.name}">
           ${checkIconSvg()}
         </button>
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
+    }
+
+    function groupHasUnresolvedPriceIssue(group) {
+      return group.children.some((c) => isEgregiousRequired(c) || isPriceAtRisk(c));
+    }
+
+    function groupDetectedCellClass(group) {
+      const classes = ["col-detected"];
+      if (groupHasUnresolvedPriceIssue(group)) classes.push("col-detected--mismatch");
+      return classes.join(" ");
+    }
+
+    function groupPlaceholderFieldHtml() {
+      return `<div class="group-placeholder-field" aria-hidden="true"><span class="group-placeholder-field__dash">—</span></div>`;
+    }
+
+    function groupPricePlaceholderTd(colClass = "") {
+      const classAttr = colClass ? ` class="${colClass}"` : "";
+      return `<td${classAttr}>${groupPlaceholderFieldHtml()}</td>`;
+    }
+
+    function groupMarginPlaceholderHtml() {
+      return `<div class="margin-field margin-field--readonly group-placeholder-margin">
+        <span class="group-placeholder-field__dash">—</span>
+        <span class="margin-field__suffix">%</span>
+        <span class="margin-field__lock" aria-hidden="true">${lockIconSvg()}</span>
+      </div>`;
+    }
+
+    function groupPriceBridgePlaceholderTd() {
+      return `<td class="col-price-bridge"><div class="apply-bridge-cell"><span class="apply-bridge-placeholder" aria-hidden="true"></span></div></td>`;
+    }
+
+    function groupPriceColumnsHtml(group) {
+      const detectedClass = groupDetectedCellClass(group);
+
+      if (layoutVariant === "layout-5" || layoutVariant === "layout-5-1" || layoutVariant === "layout-8") {
+        return groupPricePlaceholderTd("col-msrp-combined");
+      }
+      if (isInlineDetectedVariant()) {
+        return `${groupPricePlaceholderTd(detectedClass)}${groupPricePlaceholderTd("col-price")}`;
+      }
+      if (layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
+        return `${groupPricePlaceholderTd(detectedClass)}${groupPriceBridgePlaceholderTd()}${groupPricePlaceholderTd("col-price")}`;
+      }
+      if (layoutVariant === "layout-6" || layoutVariant === "layout-7") {
+        return `${groupPricePlaceholderTd(detectedClass)}${groupPricePlaceholderTd()}`;
+      }
+      return `${groupPricePlaceholderTd(detectedClass)}${groupPricePlaceholderTd()}`;
+    }
+
+    function groupStatusIconHtml(group) {
+      for (const child of group.children) {
+        const html = statusIconHtml(child);
+        if (html) return html;
+      }
+      return "";
     }
 
     function priceColumnsHtml(row, isGroupHeader) {
       if (isGroupHeader) {
-        if (layoutVariant === "layout-5" || layoutVariant === "layout-5-1" || layoutVariant === "layout-8") {
-          return `<td class="col-msrp-combined"></td><td></td>`;
-        }
-        if (layoutVariant === "layout-4-2") {
-          return `<td class="col-detected"></td><td></td>`;
-        }
-        if (layoutVariant === "layout-6" || layoutVariant === "layout-7" || layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
-          if (layoutVariant === "layout-4" || layoutVariant === "layout-4-1") {
-            return `<td class="col-detected"></td><td class="col-price-bridge"></td><td></td>`;
-          }
-          return `<td class="col-detected"></td><td></td>`;
-        }
-        return `<td class="col-detected"></td><td></td>`;
+        return groupPriceColumnsHtml(row);
       }
 
       if (layoutVariant === "layout-5") {
@@ -2943,6 +3483,11 @@
       if (layoutVariant === "layout-7") {
         return `<td class="${detectedCellClass(row)}">${detectedCellDisplayHtml(row)}</td>
           <td>${msrpCellHtml(row)}</td>`;
+      }
+
+      if (layoutVariant === "layout-final") {
+        return `<td class="${detectedCellClass(row)}">${detectedCellHtmlLayoutFinal(row)}</td>
+          <td class="col-price">${msrpCellHtmlLayout4(row)}</td>`;
       }
 
       if (layoutVariant === "layout-4-2") {
@@ -2971,29 +3516,30 @@
     }
 
     function msrpCellHtmlLayout4(row) {
-      const resolved = isResolved(row);
-      const stateClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      const stateClass = msrpPriceFieldClass(row);
       return `<div class="price-field ${stateClass}">
         <span class="cur">$</span>
         <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="MSRP for ${row.name}" />
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
     }
 
     function msrpCellHtml(row) {
-      const resolved = isResolved(row);
-      const mismatchClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      const mismatchClass = msrpPriceFieldClass(row);
       return `<div class="price-field ${mismatchClass}">
         <span class="cur">$</span>
         <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="MSRP for ${row.name}" />
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
     }
 
     function msrpCellHtmlLayout11(row) {
       const resolved = isResolved(row);
-      const mismatchClass = resolved ? "price-field--resolved" : "price-field--mismatch";
+      const mismatchClass = msrpPriceFieldClass(row);
       const fieldHtml = `<div class="price-field ${mismatchClass}">
         <span class="cur">$</span>
         <input type="number" step="0.01" min="0" value="${formatMoney(row.msrp)}" data-field="msrp" data-id="${row.id}" aria-label="MSRP for ${row.name}" />
+        ${msrpWarnTooltipHtml(row)}
       </div>`;
 
       if (!resolved) return fieldHtml;
@@ -3006,10 +3552,17 @@
       </div>`;
     }
 
+    function wholesaleWarnTooltipHtml(row) {
+      if (!isLowMargin(row) || isDeclined(row)) return "";
+      return `<span class="price-field__warn-tooltip price-field__warn-tooltip--low-margin" role="tooltip">Update this wholesale price to improve the margin.</span>`;
+    }
+
     function wholesaleCellHtml(row) {
-      return `<div class="price-field">
+      const warnClass = wholesalePriceFieldClass(row);
+      return `<div class="price-field ${warnClass}">
         <span class="cur">$</span>
         <input type="number" step="0.01" min="0" value="${formatMoney(row.wholesale)}" data-field="wholesale" data-id="${row.id}" aria-label="Wholesale for ${row.name}" />
+        ${wholesaleWarnTooltipHtml(row)}
       </div>`;
     }
 
@@ -3027,35 +3580,29 @@
       if (hidden) tr.classList.add("hidden");
       if (!isGroupHeader && selectedIds.has(row.id)) tr.classList.add("row-selected");
 
+      const imageCell = isVariant
+        ? ""
+        : `<div class="col-image-inner"><img class="product-thumb" src="${row.thumb}" alt="" /></div>`;
+
       const nameCell = isVariant
         ? `<span class="product-name product-name--variant">${row.name}</span>`
-        : isGroupHeader
-          ? `<div class="product-cell">
-              <button type="button" class="group-toggle${row.expanded ? "" : " collapsed"}" data-toggle-group="${row.id}" aria-label="Toggle variants">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <img class="product-thumb" src="${row.thumb}" alt="" />
-              <span class="product-name">${row.name}</span>
-            </div>`
-          : `<div class="product-cell">
-              <img class="product-thumb" src="${row.thumb}" alt="" />
-              <span class="product-name">${row.name}</span>
-            </div>`;
+        : `<div class="product-cell"><span class="product-name">${row.name}</span></div>`;
 
       const statusCell = isGroupHeader
-        ? ""
+        ? groupStatusIconHtml(row)
         : statusIconHtml(row);
 
-      const variantsCell = isGroupHeader ? String(variantCount) : "—";
+      const variantsCell = isGroupHeader ? String(variantCount) : "1";
 
       tr.innerHTML = `
         <td class="col-check col-freeze col-freeze-1">${isGroupHeader ? "" : `<input type="checkbox" data-select="${row.id}" aria-label="Select ${row.name}"${selectedIds.has(row.id) ? " checked" : ""} />`}</td>
         <td class="col-status col-freeze col-freeze-2">${statusCell}</td>
-        <td class="col-product col-freeze col-freeze-3">${nameCell}</td>
+        <td class="col-image col-freeze col-freeze-3">${imageCell}</td>
+        <td class="col-product col-freeze col-freeze-4">${nameCell}</td>
         <td class="col-variants">${variantsCell}</td>
         ${priceColumnsHtml(row, isGroupHeader)}
-        <td class="col-price">${isGroupHeader ? "" : wholesaleCellHtml(row)}</td>
-        <td class="col-margin">${isGroupHeader ? "" : marginCellHtml(row)}</td>
+        <td class="col-price">${isGroupHeader ? groupPlaceholderFieldHtml() : wholesaleCellHtml(row)}</td>
+        <td class="col-margin">${isGroupHeader ? groupMarginPlaceholderHtml() : marginCellHtml(row)}</td>
         ${layoutVariant === "layout-7" ? `<td class="col-actions">${isGroupHeader ? "" : applyActionCellHtml(row)}</td>` : ""}
       `;
 
@@ -3093,7 +3640,19 @@
       updateFrozenScrollShadow();
     }
 
+    function syncActiveFilterWithCounts() {
+      const c = counts();
+      if (activeFilter === "required" && c.required === 0) activeFilter = "all";
+      if (activeFilter === "at-risk" && c.atRisk === 0) activeFilter = "all";
+      document.querySelectorAll(".filter-pills .pill").forEach((p) => {
+        const isActive = p.dataset.filter === activeFilter;
+        p.classList.toggle("pill--active", isActive);
+        p.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+
     function render() {
+      syncActiveFilterWithCounts();
       const tbody = document.getElementById("grid-body");
       tbody.innerHTML = "";
 
@@ -3101,13 +3660,11 @@
         if (row.isGroup) {
           const groupTr = buildRowTr(row, { isGroupHeader: true, variantCount: row.children.length });
           tbody.appendChild(groupTr);
-          if (row.expanded) {
-            row.children.forEach((child) => {
-              const childTr = buildRowTr(child, { isVariant: true });
-              if (!rowVisible(child)) childTr.classList.add("hidden");
-              tbody.appendChild(childTr);
-            });
-          }
+          row.children.forEach((child) => {
+            const childTr = buildRowTr(child, { isVariant: true });
+            if (!rowVisible(child)) childTr.classList.add("hidden");
+            tbody.appendChild(childTr);
+          });
         } else {
           tbody.appendChild(buildRowTr(row));
         }
@@ -3210,8 +3767,8 @@
       updateSaveState();
     }
 
-    function declineSelectedAtRisk() {
-      const targets = [...selectedIds].map(findRow).filter((r) => r && isAtRisk(r));
+    function declineAtRiskRows(rowList) {
+      const targets = rowList.filter((r) => r && isAtRisk(r));
       if (!targets.length) return;
       pushUndo();
       targets.forEach((row) => {
@@ -3220,6 +3777,14 @@
       dirty = true;
       render();
       updateSaveState();
+    }
+
+    function declineSelectedAtRisk() {
+      declineAtRiskRows([...selectedIds].map(findRow));
+    }
+
+    function declineAllAtRisk() {
+      declineAtRiskRows(allLeafRows());
     }
 
     function acceptDetected(id) {
@@ -3251,16 +3816,6 @@
         btn.addEventListener("click", () => acceptDetected(btn.dataset.accept));
       });
 
-      document.querySelectorAll("[data-toggle-group]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const group = findRow(btn.dataset.toggleGroup);
-          if (group && group.isGroup) {
-            group.expanded = !group.expanded;
-            render();
-          }
-        });
-      });
-
       document.querySelectorAll("input[data-field]").forEach((input) => {
         input.addEventListener("change", () => {
           const row = findRow(input.dataset.id);
@@ -3288,6 +3843,7 @@
     document.getElementById("btn-apply-all").addEventListener("click", applyAllDetected);
     document.getElementById("btn-apply-selected").addEventListener("click", applySelectedDetected);
     document.getElementById("btn-decline-selected").addEventListener("click", declineSelectedAtRisk);
+    document.getElementById("btn-decline-all").addEventListener("click", declineAllAtRisk);
     document.getElementById("btn-clear-selection").addEventListener("click", clearSelection);
 
     document.querySelector(".grid-wrap").addEventListener("change", (e) => {
@@ -3347,6 +3903,10 @@
       }
     });
 
+    document.getElementById("proto-scenario").addEventListener("change", (e) => {
+      applyPrototypeScenario(e.target.value);
+    });
+
     document.getElementById("proto-layout-variant").addEventListener("change", (e) => {
       applyLayoutVariant(e.target.value);
     });
@@ -3378,6 +3938,8 @@
     });
 
     syncArrowTourToggle();
+    populateScenarioSelect();
+    syncScenarioBodyClass();
     populateLayoutVariantSelect();
     applyLayoutVariant(initialLayoutVariant());
     savedSnapshot = snapshot();
