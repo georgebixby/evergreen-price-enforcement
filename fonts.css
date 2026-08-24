@@ -1,0 +1,33 @@
+/* Graphik — Faire Slate sans-serif (matches Figma typography) */
+@font-face {
+  font-family: "Graphik";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url("https://cdn.faire.com/static/fonts/Graphik-Regular-Web.woff2") format("woff2"),
+    url("https://cdn.faire.com/static/fonts/Graphik-Regular-Web.woff") format("woff"),
+    url("https://cdn.faire.com/static/fonts/GraphikRegular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Graphik";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    url("https://cdn.faire.com/static/fonts/Graphik-Medium-Web.woff2") format("woff2"),
+    url("https://cdn.faire.com/static/fonts/Graphik-Medium-Web.woff") format("woff"),
+    url("https://cdn.faire.com/static/fonts/GraphikMedium.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Graphik";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    url("https://cdn.faire.com/static/fonts/Graphik-Semibold-Web.woff2") format("woff2"),
+    url("https://cdn.faire.com/static/fonts/Graphik-Semibold-Web.woff") format("woff"),
+    url("https://cdn.faire.com/static/fonts/GraphikSemiBold.otf") format("opentype");
+}

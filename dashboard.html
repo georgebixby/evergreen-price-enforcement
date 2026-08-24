@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pricing issues — Dashboard</title>
+  <link rel="preconnect" href="https://cdn.faire.com" crossorigin />
+  <link rel="stylesheet" href="fonts.css" />
+  <style>
+    :root {
+      --text: #333;
+      --subdued: #757575;
+      --border: #dfe0e1;
+      --border-muted: #dadada;
+      --surface-tile: #fbfbfb;
+      --radius: 4px;
+      --nav-width: 256px;
+      --content-inset: 56px;
+      --main-pad-right: 40px;
+      --font: "Graphik", system-ui, -apple-system, sans-serif;
+      --error: #c62828;
+      --error-bg: #fdecea;
+      --success: #2e7d32;
+      --chart-positive: #ddeda5;
+      --chart-warning: #ffe7b1;
+      --chart-negative: #ffb1b1;
+      --chart-track: #f5f5f5;
+      --icon-blue-bg: #e8f0ff;
+      --tag-critical-bg: #fdeaea;
+      --tag-critical-text: #c62828;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.15px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: min(1920px, 100%);
+      margin: 0 auto;
+      display: flex;
+      min-height: 100vh;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .nav {
+      width: var(--nav-width);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+      overflow-y: auto;
+      background: #fff;
+    }
+
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 104px;
+      padding: 32px 24px;
+    }
+
+    .logo {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+    }
+
+    .nav-tools { display: flex; gap: 8px; }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 999px;
+      background: var(--surface-tile);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .icon-btn--notify::after {
+      content: "";
+      position: absolute;
+      top: 8px;
+      right: 9px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e02424;
+      border: 1.5px solid var(--surface-tile);
+    }
+
+    .nav-links { flex: 1; padding-top: 6px; }
+
+    .nav-row {
+      min-height: 36px;
+      padding: 6px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #595959;
+    }
+
+    .nav-row--active { background: #f7f7f7; color: #2b2b2b; }
+
+    .nav-child {
+      min-height: 36px;
+      padding: 6px 24px 6px 40px;
+      font-size: 14px;
+      color: #595959;
+    }
+
+    .nav-child--link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .nav-child--active {
+      background: #f7f7f7;
+      color: #2b2b2b;
+      font-weight: 500;
+    }
+
+    .badge {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      background: #333;
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      text-align: center;
+      padding: 0 5px;
+    }
+
+    .nav-footer { border-top: 1px solid var(--border); padding: 14px 0; }
+
+    .nav-section-label {
+      padding: 12px 24px 4px 40px;
+      font-size: 12px;
+      color: var(--subdued);
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      border-left: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .dash-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 32px var(--main-pad-right) 32px var(--content-inset);
+      border-bottom: 1px solid var(--border-muted);
+    }
+
+    .dash-header h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 38px;
+      font-weight: 600;
+    }
+
+    .verified-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .verified-meta svg { color: var(--text); flex-shrink: 0; }
+
+    .dash-content {
+      padding: 32px var(--main-pad-right) 48px var(--content-inset);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 26px;
+      font-weight: 500;
+    }
+
+    .section-title--summary {
+      margin-top: 32px;
+      margin-bottom: 24px;
+    }
+
+    .alert-p0 {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: #fff;
+      border: 1px solid var(--border-muted);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .alert-p0:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .alert-p0__inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .alert-p0__thumbs {
+      position: relative;
+      width: 48px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .alert-p0__thumb {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius);
+      border: 1px solid #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      background: #f5f5f5;
+    }
+
+    .alert-p0__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .alert-p0__thumb--back {
+      left: 0;
+      top: 0;
+      transform: rotate(-5deg);
+    }
+
+    .alert-p0__thumb--front {
+      right: 0;
+      top: 3px;
+    }
+
+    .alert-p0__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .alert-p0__title {
+      font-weight: 500;
+      margin: 0 0 4px;
+    }
+
+    .alert-p0__desc {
+      margin: 0;
+      color: var(--text);
+    }
+
+    .alert-p0__actions {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-shrink: 0;
+    }
+
+    .due-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--radius);
+      background: var(--tag-critical-bg);
+      color: var(--tag-critical-text);
+      font-size: 14px;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .alert-group {
+      border: 1px solid var(--border-muted);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .alert-p1 {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: #fff;
+      padding: 16px 16px 16px 24px;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+
+    .alert-p1 + .alert-p1 {
+      border-top: 1px solid var(--border-muted);
+    }
+
+    .alert-p1:hover { background: #fafafa; }
+
+    .alert-p1--info {
+      cursor: default;
+    }
+
+    .alert-p1--info:hover { background: #fff; }
+
+    .alert-p1__inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .alert-p1__icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--icon-blue-bg);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: #333;
+    }
+
+    .alert-p1__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .alert-p1__title {
+      font-weight: 500;
+      margin: 0 0 4px;
+    }
+
+    .alert-p1__desc {
+      margin: 0;
+    }
+
+    .alert-chevron {
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .summary-card {
+      border: 1px solid var(--border-muted);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .summary-card__title {
+      font-weight: 500;
+      font-size: 14px;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 3px;
+      margin: 0;
+    }
+
+    .summary-card__body {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .donut-wrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+
+    .donut-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .donut-track {
+      opacity: 0;
+      animation: donut-track-in 0.4s ease forwards;
+    }
+
+    @keyframes donut-track-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .donut-arc {
+      transition: stroke-dasharray 0.75s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .donut-track,
+      .donut-arc,
+      .donut-center__pct,
+      .legend-row__count {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    .donut-center__pct {
+      transition: opacity 0.3s ease;
+    }
+
+    .donut-center__pct.is-animating {
+      opacity: 0.7;
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-center__pct {
+      font-size: 18px;
+      line-height: 26px;
+    }
+
+    .donut-center__label {
+      font-size: 12px;
+      line-height: 16px;
+      color: #6c6a6a;
+    }
+
+    .legend {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      gap: 8px;
+    }
+
+    .legend-row__left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-dot--positive { background: var(--chart-positive); }
+    .legend-dot--warning { background: var(--chart-warning); }
+    .legend-dot--negative { background: var(--chart-negative); }
+
+    .legend-row__count {
+      color: #1a1a1a;
+      flex-shrink: 0;
+    }
+
+    .icon-14 { width: 14px; height: 14px; }
+    .icon-16 { width: 16px; height: 16px; }
+    .hidden { display: none !important; }
+
+    .proto-panel {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 50;
+      width: 260px;
+      background: #1f1f1f;
+      color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      font-size: 13px;
+    }
+
+    .proto-panel summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .proto-panel summary::-webkit-details-marker { display: none; }
+
+    .proto-panel__body { padding: 2px 14px 14px; background: #262626; }
+
+    .proto-label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a9a9a9;
+      margin: 10px 0 6px;
+      font-weight: 600;
+    }
+
+    .proto-select {
+      width: 100%;
+      background: #1f1f1f;
+      border: 1px solid #4a4a4a;
+      color: #e8e8e8;
+      font-family: inherit;
+      font-size: 12.5px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="nav" aria-label="Primary">
+      <div class="nav-header">
+        <span class="logo">FAIRE</span>
+        <div class="nav-tools">
+          <button type="button" class="icon-btn icon-btn--notify" aria-label="Notifications">
+            <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M14.857 17.082a22.387 22.387 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.456 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+            </svg>
+          </button>
+          <button type="button" class="icon-btn" aria-label="Account">
+            <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.964 0A9 9 0 1 0 6.018 18.725m11.964 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75A3 3 0 1 1 9 9.75a3 3 0 0 1 6 0Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <div class="nav-row"><span>Home</span></div>
+        <div class="nav-row"><span>Orders</span><span class="badge">3</span></div>
+        <div class="nav-row"><span>Messages</span></div>
+        <div class="nav-row nav-row--active"><span>Products</span></div>
+        <div class="nav-child">Bulk upload</div>
+        <div class="nav-child">Inventory</div>
+        <div class="nav-child">Collections</div>
+        <div class="nav-child">Performance</div>
+        <div class="nav-row"><span>Customers</span></div>
+        <div class="nav-row"><span>Marketing</span></div>
+        <div class="nav-row"><span>Analytics</span></div>
+        <div class="nav-row"><span>My shop</span></div>
+        <div class="nav-row"><span>Settings</span></div>
+        <div class="nav-section-label">Sales channels</div>
+        <div class="nav-child">Marketplace</div>
+        <div class="nav-child">Faire Direct</div>
+      </nav>
+      <div class="nav-footer">
+        <div class="nav-child">View shop</div>
+        <div class="nav-child">Help Center</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="dash-header">
+        <h1>Pricing issues</h1>
+        <div class="verified-meta" id="header-verified">
+          <svg class="icon-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016a11.959 11.959 0 0 1-4.5-1.076Z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span id="header-verified-text">Last verified August 17, 2026</span>
+        </div>
+      </header>
+
+      <div class="dash-content">
+        <section aria-labelledby="needs-attention-title">
+          <h2 class="section-title" id="needs-attention-title">Needs attention</h2>
+          <div id="p0-slot"></div>
+          <div class="alert-group" id="p1-list"></div>
+        </section>
+
+        <section aria-labelledby="summary-title">
+          <h2 class="section-title section-title--summary" id="summary-title">Summary</h2>
+          <div class="summary-grid" id="summary-grid"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <details class="proto-panel">
+    <summary>Prototype controls</summary>
+    <div class="proto-panel__body">
+      <label class="proto-label" for="proto-scenario">Dashboard scenario</label>
+      <select class="proto-select" id="proto-scenario" aria-label="Dashboard scenario">
+        <option value="scenario-1">Scenario 1 — Egregious P0 + underpriced + low margin</option>
+        <option value="scenario-2">Scenario 2 — No P0, WSP + low margin + lost badge</option>
+      </select>
+    </div>
+  </details>
+
+  <script>
+    const DASHBOARD_SCENARIO_KEY = "evergreen-price-dashboard-scenario";
+    const ALERT_PRODUCT_IMAGES = {
+      back: "assets/alert-product-back.png",
+      front: "assets/alert-product-front.png",
+    };
+    const CHEVRON = '<svg class="icon-16 alert-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const ARROW_DOWN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    const CHART_COLORS = {
+      positive: "#DDEDA5",
+      warning: "#FFE7B1",
+      negative: "#FFB1B1",
+      track: "#F5F5F5",
+    };
+
+    const SCENARIOS = {
+      "scenario-1": {
+        headerVerified: "Last verified August 17, 2026",
+        p0: {
+          title: "128 products with MSRPs higher than your website retail prices and your Amazon prices are at risk of losing visibility if not resolved by August 19, 2026",
+          desc: "Update your MSRPs to match your website and Amazon prices before the deadline to maintain visibility on Faire.",
+          due: "Due Aug 19",
+          href: "index.html?scenario=egregious-only",
+        },
+        p1: [
+          {
+            title: "3 products with MSRPs lower than your website retail prices",
+            desc: "Review underpriced MSRPs so retailers see accurate pricing on Faire.",
+            href: "index.html?scenario=non-egregious-only",
+            link: true,
+          },
+          {
+            title: "9 products have low margins.",
+            desc: "Update your wholesale prices to increase margins and make them more appealing to retailers.",
+            href: "index.html?scenario=low-margins",
+            link: true,
+          },
+        ],
+        summary: {
+          msrp: {
+            title: "MSRP pricing",
+            centerLabel: "Verified",
+            legend: [
+              { label: "Verified", count: 1223, dot: "positive" },
+              { label: "Underpriced", count: 3, dot: "warning" },
+              { label: "Overpriced", count: 14, dot: "negative" },
+            ],
+          },
+          wholesale: {
+            title: "Wholesale pricing",
+            centerLabel: "Compliant",
+            legend: [
+              { label: "Compliant", count: 1240, dot: "positive" },
+              { label: "Underpriced", count: 0, dot: "warning" },
+              { label: "Overpriced", count: 0, dot: "negative" },
+            ],
+          },
+          margins: {
+            title: "Margins",
+            centerLabel: "Healthy",
+            legend: [
+              { label: "Healthy", count: 1231, dot: "positive" },
+              { label: "Low margin", count: 9, dot: "negative" },
+            ],
+          },
+        },
+      },
+      "scenario-2": {
+        headerVerified: "Last verified August 17, 2026",
+        p0: null,
+        p1: [
+          {
+            title: "24 products with wholesale prices higher than your other channels are losing visibility",
+            desc: "Change prices to restore visibility on Faire.",
+            href: "index.html?scenario=mixed",
+            link: true,
+          },
+          {
+            title: "12 products have low margin",
+            desc: "Lower wholesale prices to increase conversion.",
+            href: "index.html?scenario=low-margins",
+            link: true,
+          },
+          {
+            title: "You changed 8 MSRPs and they no longer have the verified badge",
+            desc: "Edit MSRPs to match your site again to restore the badge.",
+            href: "index.html?scenario=egregious-only",
+            link: true,
+          },
+        ],
+        summary: {
+          msrp: {
+            title: "MSRP pricing",
+            centerLabel: "Verified",
+            legend: [
+              { label: "Verified", count: 1215, dot: "positive" },
+              { label: "Underpriced", count: 3, dot: "warning" },
+              { label: "Overpriced", count: 22, dot: "negative" },
+            ],
+          },
+          wholesale: {
+            title: "Wholesale pricing",
+            centerLabel: "Compliant",
+            legend: [
+              { label: "Compliant", count: 1216, dot: "positive" },
+              { label: "Underpriced", count: 0, dot: "warning" },
+              { label: "Overpriced", count: 24, dot: "negative" },
+            ],
+          },
+          margins: {
+            title: "Margins",
+            centerLabel: "Healthy",
+            legend: [
+              { label: "Healthy", count: 1228, dot: "positive" },
+              { label: "Low margin", count: 12, dot: "negative" },
+            ],
+          },
+        },
+      },
+    };
+
+    const CHART_DOT_COLORS = {
+      positive: CHART_COLORS.positive,
+      warning: CHART_COLORS.warning,
+      negative: CHART_COLORS.negative,
+    };
+
+    function donutDataFromLegend(legend) {
+      const total = legend.reduce((sum, row) => sum + row.count, 0);
+      const segments = legend
+        .map((row) => ({
+          label: row.label,
+          count: row.count,
+          color: CHART_DOT_COLORS[row.dot] || CHART_COLORS.positive,
+          pct: total > 0 ? (row.count / total) * 100 : 0,
+        }))
+        .filter((segment) => segment.count > 0);
+      const primaryCount = legend[0]?.count ?? 0;
+      const centerPct = total > 0 ? Math.round((primaryCount / total) * 100) : 0;
+      return { segments, centerPct };
+    }
+
+    function renderDonut(segments, centerPct, centerLabel) {
+      const r = 42;
+      const c = 2 * Math.PI * r;
+      const track = `<circle class="donut-track" cx="50" cy="50" r="${r}" fill="none" stroke="${CHART_COLORS.track}" stroke-width="8"/>`;
+      let offset = 0;
+      const arcs = segments
+        .map((s) => {
+          const dash = (s.pct / 100) * c;
+          const gap = c - dash;
+          const arc = `<circle class="donut-arc" cx="50" cy="50" r="${r}" fill="none" stroke="${s.color}" stroke-width="8" stroke-dasharray="0 ${c}" stroke-dashoffset="${-offset}" stroke-linecap="butt" data-dash="${dash}" data-gap="${gap}" data-offset="${offset}"/>`;
+          offset += dash;
+          return arc;
+        })
+        .join("");
+      return `
+        <div class="donut-wrap">
+          <svg viewBox="0 0 100 100" aria-hidden="true">${track}${arcs}</svg>
+          <div class="donut-center">
+            <span class="donut-center__pct" data-target="${centerPct}">0%</span>
+            <span class="donut-center__label">${centerLabel}</span>
+          </div>
+        </div>`;
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function animateDonutCharts(container) {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const wraps = container.querySelectorAll(".donut-wrap");
+
+      wraps.forEach((wrap, cardIndex) => {
+        const delay = cardIndex * 120;
+        const arcs = wrap.querySelectorAll(".donut-arc");
+        const pctEl = wrap.querySelector(".donut-center__pct");
+        const targetPct = Number(pctEl.dataset.target) || 0;
+
+        if (reducedMotion) {
+          arcs.forEach((arc) => {
+            const dash = Number(arc.dataset.dash);
+            const gap = Number(arc.dataset.gap);
+            arc.style.strokeDasharray = `${dash} ${gap}`;
+            arc.style.strokeDashoffset = `${-Number(arc.dataset.offset)}`;
+          });
+          pctEl.textContent = `${targetPct}%`;
+          return;
+        }
+
+        arcs.forEach((arc, arcIndex) => {
+          const dash = Number(arc.dataset.dash);
+          const gap = Number(arc.dataset.gap);
+          const offset = Number(arc.dataset.offset);
+          arc.style.strokeDashoffset = `${-offset}`;
+          arc.style.transitionDelay = `${delay + arcIndex * 140}ms`;
+
+          requestAnimationFrame(() => {
+            arc.style.strokeDasharray = `${dash} ${gap}`;
+          });
+        });
+
+        pctEl.classList.add("is-animating");
+        pctEl.textContent = "0%";
+        const duration = 750;
+        const startAt = performance.now() + delay + 80;
+
+        function tick(now) {
+          if (now < startAt) {
+            requestAnimationFrame(tick);
+            return;
+          }
+          const t = Math.min((now - startAt) / duration, 1);
+          pctEl.textContent = `${Math.round(targetPct * easeOutCubic(t))}%`;
+          if (t < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            pctEl.classList.remove("is-animating");
+          }
+        }
+
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function renderSummaryCard(card) {
+      const { segments, centerPct } = donutDataFromLegend(card.legend);
+      const legendHtml = card.legend
+        .map((row) => `
+          <div class="legend-row">
+            <div class="legend-row__left">
+              <span class="legend-dot legend-dot--${row.dot}"></span>
+              <span>${row.label}</span>
+            </div>
+            <span class="legend-row__count">${row.count}</span>
+          </div>`)
+        .join("");
+      return `
+        <div class="summary-card">
+          <p class="summary-card__title">${card.title}</p>
+          <div class="summary-card__body">
+            ${renderDonut(segments, centerPct, card.centerLabel)}
+            <div class="legend">${legendHtml}</div>
+          </div>
+        </div>`;
+    }
+
+    function renderP0(p0) {
+      if (!p0) return "";
+      return `
+        <a class="alert-p0" href="${p0.href}">
+          <div class="alert-p0__inner">
+            <div class="alert-p0__thumbs" aria-hidden="true">
+              <div class="alert-p0__thumb alert-p0__thumb--back">
+                <img src="${ALERT_PRODUCT_IMAGES.back}" alt="" />
+              </div>
+              <div class="alert-p0__thumb alert-p0__thumb--front">
+                <img src="${ALERT_PRODUCT_IMAGES.front}" alt="" />
+              </div>
+            </div>
+            <div class="alert-p0__text">
+              <p class="alert-p0__title">${p0.title}</p>
+              <p class="alert-p0__desc">${p0.desc}</p>
+            </div>
+            <div class="alert-p0__actions">
+              ${p0.due ? `<span class="due-tag">${p0.due}</span>` : ""}
+              ${CHEVRON}
+            </div>
+          </div>
+        </a>`;
+    }
+
+    function renderP1Item(item) {
+      const inner = `
+        <div class="alert-p1__inner">
+          <div class="alert-p1__icon">${ARROW_DOWN}</div>
+          <div class="alert-p1__text">
+            <p class="alert-p1__title">${item.title}</p>
+            ${item.desc ? `<p class="alert-p1__desc">${item.desc}</p>` : ""}
+          </div>
+          ${item.link ? CHEVRON : ""}
+        </div>`;
+      if (item.link) {
+        return `<a class="alert-p1" href="${item.href}">${inner}</a>`;
+      }
+      return `<div class="alert-p1 alert-p1--info">${inner}</div>`;
+    }
+
+    function applyScenario(key) {
+      const data = SCENARIOS[key];
+      if (!data) return;
+
+      document.getElementById("header-verified-text").textContent = data.headerVerified;
+      document.getElementById("p0-slot").innerHTML = renderP0(data.p0);
+      document.getElementById("p1-list").innerHTML = data.p1.map(renderP1Item).join("");
+
+      const summary = data.summary;
+      const summaryGrid = document.getElementById("summary-grid");
+      summaryGrid.innerHTML = [
+        renderSummaryCard(summary.msrp),
+        renderSummaryCard(summary.wholesale),
+        renderSummaryCard(summary.margins),
+      ].join("");
+      animateDonutCharts(summaryGrid);
+
+      try {
+        localStorage.setItem(DASHBOARD_SCENARIO_KEY, key);
+      } catch (_) { /* ignore */ }
+    }
+
+    const scenarioSelect = document.getElementById("proto-scenario");
+    let initial = "scenario-1";
+    try {
+      const stored = localStorage.getItem(DASHBOARD_SCENARIO_KEY);
+      if (stored && SCENARIOS[stored]) initial = stored;
+    } catch (_) { /* ignore */ }
+
+    scenarioSelect.value = initial;
+    applyScenario(initial);
+
+    scenarioSelect.addEventListener("change", (e) => {
+      applyScenario(e.target.value);
+    });
+  </script>
+</body>
+</html>

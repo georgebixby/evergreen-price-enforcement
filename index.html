@@ -4,9 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resolve pricing issues — Prototype</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://cdn.faire.com" crossorigin />
+  <link rel="stylesheet" href="fonts.css" />
   <style>
     :root {
       --text: #333;
@@ -17,7 +16,7 @@
       --nav-width: 256px;
       --content-inset: 56px;
       --main-pad-right: 40px;
-      --font: "Graphik", "DM Sans", system-ui, -apple-system, sans-serif;
+      --font: "Graphik", system-ui, -apple-system, sans-serif;
       --error: #c62828;
       --error-bg: #fdecea;
       --error-dark: #c62828;
@@ -166,6 +165,12 @@
       font-size: 14px;
       color: #595959;
       cursor: default;
+    }
+
+    .nav-child--link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
     }
 
     .nav-child--active {
@@ -2169,8 +2174,7 @@
         <div class="nav-child">Bulk upload</div>
         <div class="nav-child">Inventory</div>
         <div class="nav-child">Collections</div>
-        <div class="nav-child">Removed</div>
-        <div class="nav-child nav-child--active">Pricing issues</div>
+        <a class="nav-child nav-child--link nav-child--active" href="dashboard.html">Pricing Issues</a>
         <div class="nav-child">Performance</div>
         <div class="nav-row"><span>Customers</span></div>
         <div class="nav-row"><span>Marketing</span></div>
@@ -2190,12 +2194,12 @@
     <main class="main">
       <div class="main-top">
         <header class="main-head">
-        <button class="back-link" type="button" aria-label="Back to products">
+        <a class="back-link" href="dashboard.html" aria-label="Back to pricing issues">
           <svg class="icon-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path d="M15.75 19.5 8.25 12l7.5-7.5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          Products
-        </button>
+          Pricing issues
+        </a>
         <div class="title-row">
           <div>
             <h1>Resolve pricing issues</h1>
@@ -2263,6 +2267,9 @@
               </button>
               <button class="pill hidden" type="button" data-filter="at-risk" role="tab" aria-selected="false" id="pill-at-risk">
                 At risk <span class="pill-count" id="count-at-risk"></span>
+              </button>
+              <button class="pill hidden" type="button" data-filter="low-margin" role="tab" aria-selected="false" id="pill-low-margin">
+                Low margin <span class="pill-count" id="count-low-margin"></span>
               </button>
               <button class="pill hidden" type="button" data-filter="resolved" role="tab" aria-selected="false" id="pill-resolved">
                 Resolved
@@ -2386,6 +2393,9 @@
 
     function initialPrototypeScenario() {
       try {
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = params.get("scenario");
+        if (fromUrl && SCENARIO_OPTIONS.some((opt) => opt.value === fromUrl)) return fromUrl;
         const stored = localStorage.getItem(SCENARIO_KEY);
         if (stored && SCENARIO_OPTIONS.some((opt) => opt.value === stored)) return stored;
       } catch (_) { /* ignore */ }
@@ -2440,6 +2450,18 @@
       leaves.slice(-9).forEach(markAtRisk);
     }
 
+    function defaultFilterForScenario(scenario) {
+      return scenario === "low-margins" ? "low-margin" : "all";
+    }
+
+    function setActiveFilterPills(filter) {
+      document.querySelectorAll(".filter-pills .pill").forEach((p) => {
+        const isActive = p.dataset.filter === filter;
+        p.classList.toggle("pill--active", isActive);
+        p.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+
     function applyPrototypeScenario(scenario) {
       if (!SCENARIO_OPTIONS.some((opt) => opt.value === scenario)) return;
       prototypeScenario = scenario;
@@ -2455,12 +2477,8 @@
       undoStack.length = 0;
       redoStack.length = 0;
       selectedIds.clear();
-      activeFilter = "all";
-      document.querySelectorAll(".filter-pills .pill").forEach((p) => {
-        const isAll = p.dataset.filter === "all";
-        p.classList.toggle("pill--active", isAll);
-        p.setAttribute("aria-selected", isAll ? "true" : "false");
-      });
+      activeFilter = defaultFilterForScenario(scenario);
+      setActiveFilterPills(activeFilter);
       updateUndoRedo();
       render();
       updateSaveState();
@@ -2837,7 +2855,7 @@
     let prototypeScenario = initialPrototypeScenario();
     let rows = initialRows();
     let savedSnapshot = null;
-    let activeFilter = "all";
+    let activeFilter = defaultFilterForScenario(prototypeScenario);
     let layoutVariant = "layout-1";
     let dirty = false;
     const selectedIds = new Set();
@@ -2978,11 +2996,12 @@
     function counts() {
       const leaves = allLeafRows();
       const required = leaves.filter(isEgregiousRequired).length;
-      const atRisk = leaves.filter(isAtRisk).length;
+      const atRisk = leaves.filter(isPriceAtRisk).length;
+      const lowMargin = leaves.filter((row) => isLowMargin(row) && !isDeclined(row)).length;
       const resolved = leaves.filter(isResolved).length;
       const handled = leaves.filter(isHandled).length;
       const unresolved = leaves.filter(isRequired).length;
-      return { all: leaves.length, required, atRisk, resolved, handled, unresolved };
+      return { all: leaves.length, required, atRisk, lowMargin, resolved, handled, unresolved };
     }
 
     function updateCounts() {
@@ -2990,12 +3009,16 @@
       document.getElementById("count-all").textContent = c.all;
       document.getElementById("count-required").textContent = c.required;
       document.getElementById("count-at-risk").textContent = c.atRisk;
+      document.getElementById("count-low-margin").textContent = c.lowMargin;
 
       const pillRequired = document.getElementById("pill-required");
       pillRequired.classList.toggle("hidden", c.required === 0);
 
       const pillAtRisk = document.getElementById("pill-at-risk");
-      pillAtRisk.classList.toggle("hidden", c.atRisk === 0);
+      pillAtRisk.classList.toggle("hidden", c.atRisk === 0 || prototypeScenario === "low-margins");
+
+      const pillLowMargin = document.getElementById("pill-low-margin");
+      pillLowMargin.classList.toggle("hidden", c.lowMargin === 0);
 
       const pillResolved = document.getElementById("pill-resolved");
       pillResolved.classList.toggle("hidden", c.handled === 0);
@@ -3132,7 +3155,8 @@
     function rowVisible(row) {
       if (activeFilter === "all") return true;
       if (activeFilter === "required") return isEgregiousRequired(row);
-      if (activeFilter === "at-risk") return isAtRisk(row);
+      if (activeFilter === "at-risk") return isPriceAtRisk(row);
+      if (activeFilter === "low-margin") return isLowMargin(row) && !isDeclined(row);
       if (activeFilter === "resolved") return isHandled(row);
       return true;
     }
@@ -3661,11 +3685,8 @@
       const c = counts();
       if (activeFilter === "required" && c.required === 0) activeFilter = "all";
       if (activeFilter === "at-risk" && c.atRisk === 0) activeFilter = "all";
-      document.querySelectorAll(".filter-pills .pill").forEach((p) => {
-        const isActive = p.dataset.filter === activeFilter;
-        p.classList.toggle("pill--active", isActive);
-        p.setAttribute("aria-selected", isActive ? "true" : "false");
-      });
+      if (activeFilter === "low-margin" && c.lowMargin === 0) activeFilter = "all";
+      setActiveFilterPills(activeFilter);
     }
 
     function render() {
@@ -3872,10 +3893,7 @@
     document.querySelectorAll(".filter-pills .pill").forEach((pill) => {
       pill.addEventListener("click", () => {
         activeFilter = pill.dataset.filter;
-        document.querySelectorAll(".filter-pills .pill").forEach((p) => {
-          p.classList.toggle("pill--active", p === pill);
-          p.setAttribute("aria-selected", p === pill ? "true" : "false");
-        });
+        setActiveFilterPills(activeFilter);
         render();
       });
     });
